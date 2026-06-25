@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>Iron Log</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#0f0f0f;color:#e8e8e8;font-family:'Courier New',monospace;min-height:100vh;padding-bottom:80px}
+button{font-family:'Courier New',monospace;cursor:pointer}
+textarea{font-family:'Courier New',monospace;-webkit-appearance:none}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#333}
+
+#header{padding:20px 16px 12px;border-bottom:1px solid #2a2a2a;display:flex;align-items:baseline;justify-content:space-between}
+#header-left{display:flex;align-items:baseline;gap:10px}
+#title{font-size:20px;font-weight:700;letter-spacing:-0.5px;color:#fff}
+#subtitle{font-size:10px;color:#444;letter-spacing:2px;text-transform:uppercase}
+#save-indicator{font-size:10px;color:#3a3;letter-spacing:1px;opacity:0;transition:opacity 0.3s}
+#save-indicator.show{opacity:1}
+#export-btn{background:none;border:1px solid #2a2a2a;border-radius:4px;color:#444;font-size:10px;padding:4px 8px;letter-spacing:1px}
+
+#tabs{display:flex;border-bottom:1px solid #2a2a2a;padding:0 16px;overflow-x:auto}
+.tab-btn{background:none;border:none;padding:11px 12px 9px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#444;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s}
+.tab-btn.active{color:#E8FF47;border-bottom:2px solid #E8FF47}
+
+#content{padding:16px}
+.panel{display:none}.panel.active{display:block}
+
+/* LOG PANEL */
+.hint{color:#444;font-size:11px;line-height:1.9;margin-bottom:14px}
+.hint span{color:#E8FF47}
+#log-input{width:100%;min-height:180px;background:#181818;border:1px solid #2a2a2a;border-radius:8px;color:#ccc;font-size:13px;padding:12px;resize:vertical;outline:none;display:block}
+#add-btn{background:#E8FF47;color:#000;border:none;border-radius:6px;padding:10px 22px;font-size:12px;font-weight:700;letter-spacing:1px;margin-top:10px}
+#add-msg{color:#E8FF47;font-size:12px;margin-left:12px;opacity:0;transition:opacity 0.3s}
+#add-msg.show{opacity:1}
+#full-log-label{font-size:10px;color:#333;letter-spacing:2px;text-transform:uppercase;margin:24px 0 8px}
+#raw-log{width:100%;min-height:240px;background:#111;border:1px solid #2a2a2a;border-radius:8px;color:#555;font-size:11px;padding:12px;resize:vertical;outline:none;display:block}
+
+/* PRs PANEL */
+.section-label{font-size:10px;color:#444;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+#pr-list{display:flex;flex-direction:column;gap:2px}
+.pr-row{background:#181818;border:1px solid #2a2a2a;border-radius:6px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden;cursor:pointer}
+.pr-row:active{background:#1e1e1e}
+.pr-bar{position:absolute;left:0;top:0;bottom:0;background:rgba(232,255,71,0.05);pointer-events:none}
+.pr-name{font-size:12px;color:#ddd;font-weight:600;position:relative}
+.pr-right{text-align:right;flex-shrink:0;margin-left:10px;position:relative}
+.pr-weight{color:#E8FF47;font-size:14px;font-weight:700}
+.pr-weight-unit{font-size:10px;color:#444;font-weight:400}
+.pr-meta{font-size:10px;color:#333;margin-top:1px}
+
+/* PROGRESS PANEL */
+#ex-buttons{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px}
+.ex-btn{background:#181818;color:#666;border:1px solid #2a2a2a;border-radius:4px;padding:4px 9px;font-size:11px;font-family:'Courier New',monospace}
+.ex-btn.active{background:#E8FF47;color:#000;border-color:#E8FF47;font-weight:700}
+#progress-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:2px}
+#progress-sub{font-size:10px;color:#444;margin-bottom:16px}
+#chart-container{width:100%;height:180px;position:relative;margin-bottom:20px}
+canvas#chart{width:100%;height:100%}
+#sets-label{font-size:10px;color:#333;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+#sets-list .set-day{margin-bottom:8px}
+#sets-list .set-date{font-size:10px;color:#444;margin-bottom:3px}
+.set-chip{display:inline-block;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:3px;padding:2px 6px;font-size:11px;margin:2px 2px 0 0;color:#888}
+#no-data{color:#333;font-size:12px;margin-top:16px}
+
+/* VOLUME PANEL */
+#vol-hint{font-size:11px;color:#333;margin-bottom:16px}
+#vol-list{display:flex;flex-direction:column;gap:10px}
+.vol-row{cursor:pointer}
+.vol-row-header{display:flex;justify-content:space-between;margin-bottom:3px}
+.vol-name{font-size:12px;color:#bbb}
+.vol-name.low{color:#e87047}
+.vol-count{font-size:10px;color:#444}
+.vol-count.low{color:#e87047}
+.vol-track{height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden}
+.vol-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#E8FF4766,#E8FF47)}
+.vol-fill.low{background:linear-gradient(90deg,#e87047,#e8b047)}
+#attention-box{margin-top:20px;padding:12px;background:#181818;border-radius:8px;border:1px solid #2a2a2a}
+#attention-label{font-size:10px;color:#333;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.attention-item{font-size:12px;color:#e87047;margin-bottom:4px}
+.attention-item span{color:#444}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-left">
+    <div id="title">IRON LOG</div>
+    <div id="subtitle">— sessions</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="save-indicator">SAVED ✓</span>
+    <button id="export-btn" onclick="exportLog()">EXPORT</button>
+  </div>
+</div>
+
+<div id="tabs">
+  <button class="tab-btn active" onclick="switchTab('log',this)">⌨ Log</button>
+  <button class="tab-btn" onclick="switchTab('prs',this)">🏆 PRs</button>
+  <button class="tab-btn" onclick="switchTab('progress',this)">📈 Progress</button>
+  <button class="tab-btn" onclick="switchTab('volume',this)">🔥 Volume</button>
+</div>
+
+<div id="content">
+
+  <!-- LOG -->
+  <div id="panel-log" class="panel active">
+    <p class="hint">Paste your session. Your existing format works as-is.<br>
+      <span>## 25</span> → date &nbsp;·&nbsp; <span>Exercise Name</span> → exercise &nbsp;·&nbsp; <span>- 70# 10</span> → set
+    </p>
+    <textarea id="log-input" placeholder="## 25&#10;Dips&#10;- 50# 10&#10;- 55# 8&#10;Lat Pulldown&#10;- 140# 10&#10;- 150# 10"></textarea>
+    <div style="display:flex;align-items:center;margin-top:10px">
+      <button id="add-btn" onclick="addSession()">ADD SESSION</button>
+      <span id="add-msg">✓ Session saved</span>
+    </div>
+    <div id="full-log-label">Full log — edit directly if needed</div>
+    <textarea id="raw-log" oninput="onRawEdit()"></textarea>
+  </div>
+
+  <!-- PRs -->
+  <div id="panel-prs" class="panel">
+    <div class="section-label">Personal Records — tap any row for progress chart</div>
+    <div id="pr-list"></div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="panel-progress" class="panel">
+    <div class="section-label">Select exercise</div>
+    <div id="ex-buttons"></div>
+    <div id="progress-title"></div>
+    <div id="progress-sub"></div>
+    <div id="chart-container"><canvas id="chart"></canvas></div>
+    <div id="sets-label">All sets</div>
+    <div id="sets-list"></div>
+    <div id="no-data"></div>
+  </div>
+
+  <!-- VOLUME -->
+  <div id="panel-volume" class="panel">
+    <div class="section-label">Total sets per exercise</div>
+    <div id="vol-hint">Short bars = concentrate here. Tap any row for progress.</div>
+    <div id="vol-list"></div>
+    <div id="attention-box">
+      <div id="attention-label">Needs attention</div>
+      <div id="attention-list"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STORAGE ──────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'ironlog_v1';
+
+const DEFAULT_LOG = `## 5
+Dips
+- 45# 10
+Pullups
+- wide 45# 10
+- rev 45# 10
+- reg 45# 10
+MTS Chest Press
+- 55# 10
+- 60# 10
+- 70# 10
+Pull down
+- 65# 10
+Incline press
+- 47# 10
+- 57# 10
+- 67# 10
+Hip Adductor
+- 115# 10
+- 120# 10
+- 125# 10
+Hip Abductor
+- 115# 10
+- 120# 10
+- 125# 10
+
+## 12
+Pullups
+- 45# 10
+- 45# 10
+- 45# 10
+Dips
+- 45# 10
+Lat pulldown
+- 120# 10
+- 130# 10
+- 140# 10
+Seated row
+- 115# 10
+- 125# 10
+- 130# 10
+Delt fly
+- 100# 10
+- 90# 10
+
+## 13
+Ab bench
+- 40#/35# 12
+- 40#/35# 12
+- 40#/35# 10
+Pull-ups
+- -45# 10
+- -45# 10
+Ab crunch
+- 120# 12
+- 140# 10
+- 150# 10
+Rotary torso
+- 120# 10
+- 130# 10
+- 140# 10
+MTS Chest press
+- 55# 10
+- 60# 10
+- 65# 10
+Tricep extension
+- 100# 15
+- 120# 10
+- 150# 10
+
+## 16
+Pullups
+- 45# 10 reg
+- 45# 10 rev
+- 45# 10 wide
+Dips
+- 45# 10
+MTS Row
+- 60# 10
+- 70# 10
+- 80# 10
+MTS pulldown
+- 80# 10
+- 90# 10
+- 95# 10
+Hip adductor
+- 100# 10
+- 110# 10
+- 120# 10
+Hip abductor
+- 100# 10
+- 110# 10
+- 115# 10
+Bicep curl EZ bar
+- 40# 10
+- 40# 10
+- 50# 10
+
+## 24
+Abdominal
+- 125# 12
+- 140# 10
+- 155# 10
+Torso Rotate
+- 150# 10
+- 150# 10
+- 160# 10
+Ab bench
+- 40#/35# 12
+- 40#/35# 10
+- 40#/35# 10
+Back extension
+- 25# 10`;
+
+// ── ALIASES ───────────────────────────────────────────────────────────────────
+const ALIASES = {
+  "pullups":"Pullup","pull-ups":"Pullup","pull ups":"Pullup","pullup":"Pullup",
+  "pullup wide":"Pullup (Wide)","pullups wide":"Pullup (Wide)","wide pullup":"Pullup (Wide)",
+  "pullup rev":"Pullup (Reverse)","pullups rev":"Pullup (Reverse)","rev pullup":"Pullup (Reverse)",
+  "pullup reg":"Pullup (Regular)","pullups reg":"Pullup (Regular)",
+  "dips":"Dips","mts chest press":"MTS Chest Press","mts row":"MTS Row","mts pulldown":"MTS Pulldown",
+  "pull down":"Lat Pulldown","pulldown":"Lat Pulldown","lat pulldown":"Lat Pulldown",
+  "seated row":"Seated Row","incline press":"Incline Press",
+  "hip adductor":"Hip Adductor","hip abductor":"Hip Abductor","delt fly":"Delt Fly",
+  "ab bench":"Ab Bench","abdominal":"Ab Crunch Machine","ab crunch":"Ab Crunch Machine",
+  "rotary torso":"Rotary Torso","torso rotate":"Rotary Torso",
+  "tricep extension":"Tricep Extension","bicep curl ez bar":"Bicep Curl (EZ Bar)",
+  "bicep curl":"Bicep Curl (EZ Bar)","upright row":"Upright Row",
+  "arm raise":"Arm Raise","back extension":"Back Extension"
+};
+
+function canon(name){ const k=name.trim().toLowerCase().replace(/\s+/g,' '); return ALIASES[k]||name.trim(); }
+
+// ── PARSER ────────────────────────────────────────────────────────────────────
+function parseWeight(s){
+  s=s.trim().replace(/#/g,'');
+  if(s.includes('/')){const p=s.split('/').map(Number);return{dual:true,v:p[0],v2:p[1],assisted:false};}
+  const assisted=s.startsWith('-');
+  const val=parseFloat(s.replace('-',''));
+  return{dual:false,v:isNaN(val)?0:val,assisted};
+}
+
+function parseSessions(text){
+  const sessions=[];let date=null,ex=null;
+  for(let line of text.split('\n')){
+    line=line.trim();if(!line)continue;
+    const dm=line.match(/^##\s+(.+)/);
+    if(dm){date=dm[1].trim();ex=null;continue;}
+    if(!date)continue;
+    const sm=line.match(/^-\s+(.+)/);
+    if(sm&&ex){
+      const parts=sm[1].trim().split(/\s+/);
+      if(parts.length>=2){
+        const w=parseWeight(parts[0]);
+        const reps=parseInt(parts[parts.length-1]);
+        let sess=sessions.find(s=>s.date===date);
+        if(!sess){sess={date,exercises:{}};sessions.push(sess);}
+        if(!sess.exercises[ex])sess.exercises[ex]=[];
+        sess.exercises[ex].push({...w,reps:isNaN(reps)?10:reps});
+      }
+      continue;
+    }
+    if(!line.startsWith('#')&&!line.startsWith('-'))ex=canon(line.replace(/:$/,''));
+  }
+  return sessions;
+}
+
+function computePRs(sessions){
+  const prs={};
+  for(const s of sessions)for(const[ex,sets]of Object.entries(s.exercises))
+    for(const set of sets)if(!prs[ex]||set.v>prs[ex].v)prs[ex]={...set,date:s.date};
+  return prs;
+}
+function computeVolume(sessions){
+  const v={};
+  for(const s of sessions)for(const[ex,sets]of Object.entries(s.exercises))v[ex]=(v[ex]||0)+sets.length;
+  return v;
+}
+function computeProgress(sessions,ex){
+  return sessions.filter(s=>s.exercises[ex]).map(s=>({
+    date:s.date,weight:s.exercises[ex].reduce((b,x)=>x.v>b?x.v:b,0)
+  }));
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let rawText='';let sessions=[],prs={},volume={};let selectedEx=null;let saveTimer=null;
+
+function load(){
+  try{const s=localStorage.getItem(STORAGE_KEY);if(s)return JSON.parse(s).rawText;}catch(e){}
+  return null;
+}
+function save(text){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({rawText:text}));}catch(e){}
+  const ind=document.getElementById('save-indicator');
+  ind.classList.add('show');clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>ind.classList.remove('show'),1400);
+}
+
+function recompute(){
+  sessions=parseSessions(rawText);
+  prs=computePRs(sessions);
+  volume=computeVolume(sessions);
+  document.getElementById('subtitle').textContent=`${sessions.length} sessions · ${Object.keys(prs).length} exercises`;
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='prs')renderPRs();
+  if(name==='progress')renderProgress();
+  if(name==='volume')renderVolume();
+}
+
+// ── LOG TAB ───────────────────────────────────────────────────────────────────
+function addSession(){
+  const input=document.getElementById('log-input').value.trim();
+  if(!input)return;
+  rawText=rawText+'\n\n'+input;
+  document.getElementById('raw-log').value=rawText;
+  document.getElementById('log-input').value='';
+  recompute();save(rawText);
+  const msg=document.getElementById('add-msg');
+  msg.classList.add('show');setTimeout(()=>msg.classList.remove('show'),2500);
+}
+
+function onRawEdit(){
+  rawText=document.getElementById('raw-log').value;
+  recompute();save(rawText);
+}
+
+function exportLog(){
+  const blob=new Blob([rawText],{type:'text/plain'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='workout-log.md';a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── PRs TAB ───────────────────────────────────────────────────────────────────
+function renderPRs(){
+  const list=document.getElementById('pr-list');
+  const exs=Object.keys(prs).sort();
+  const maxVol=Math.max(...Object.values(volume),1);
+  list.innerHTML=exs.map(ex=>{
+    const pr=prs[ex];
+    const vol=volume[ex]||0;
+    const pct=(vol/maxVol*100).toFixed(1);
+    const wStr=pr.dual?`${pr.v}/${pr.v2}`:`${pr.v}`;
+    return `<div class="pr-row" onclick="goProgress('${ex}')">
+      <div class="pr-bar" style="width:${pct}%"></div>
+      <div class="pr-name">${ex}</div>
+      <div class="pr-right">
+        <span class="pr-weight">${wStr}<span class="pr-weight-unit"> lbs</span></span>
+        <div class="pr-meta">day ${pr.date} · ${vol} sets</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PROGRESS TAB ──────────────────────────────────────────────────────────────
+function goProgress(ex){
+  selectedEx=ex;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const btn=document.querySelectorAll('.tab-btn')[2];
+  btn.classList.add('active');
+  document.getElementById('panel-progress').classList.add('active');
+  renderProgress();
+}
+
+function renderProgress(){
+  const exs=Object.keys(prs).sort();
+  const btns=document.getElementById('ex-buttons');
+  btns.innerHTML=exs.map(ex=>`<button class="ex-btn${ex===selectedEx?' active':''}" onclick="selectEx('${ex}')">${ex}</button>`).join('');
+  renderChart();
+}
+
+function selectEx(ex){selectedEx=ex;renderProgress();}
+
+function renderChart(){
+  const noData=document.getElementById('no-data');
+  const chartContainer=document.getElementById('chart-container');
+  const setsList=document.getElementById('sets-list');
+  const setsLabel=document.getElementById('sets-label');
+
+  if(!selectedEx){
+    document.getElementById('progress-title').textContent='';
+    document.getElementById('progress-sub').textContent='';
+    noData.textContent='Pick an exercise above.';
+    chartContainer.style.display='none';setsLabel.style.display='none';setsList.innerHTML='';return;
+  }
+
+  const data=computeProgress(sessions,selectedEx);
+  document.getElementById('progress-title').textContent=selectedEx;
+
+  if(data.length<2){
+    document.getElementById('progress-sub').textContent='';
+    noData.textContent=data.length===0?'No data yet.':'Need at least 2 sessions to chart.';
+    chartContainer.style.display='none';
+  } else {
+    noData.textContent='';
+    chartContainer.style.display='block';
+    document.getElementById('progress-sub').textContent=`Max weight per session · ${data.length} data points`;
+    drawChart(data);
+  }
+
+  // sets list
+  const sessionsWithEx=sessions.filter(s=>s.exercises[selectedEx]);
+  if(sessionsWithEx.length){
+    setsLabel.style.display='block';
+    setsList.innerHTML=sessionsWithEx.map(s=>{
+      const chips=s.exercises[selectedEx].map(set=>{
+        const w=set.dual?`${set.v}/${set.v2}`:`${set.assisted?'-':''}${set.v}`;
+        return `<span class="set-chip">${w}# × ${set.reps}</span>`;
+      }).join('');
+      return `<div class="set-day"><div class="set-date">Day ${s.date}</div>${chips}</div>`;
+    }).join('');
+  } else {
+    setsLabel.style.display='none';setsList.innerHTML='';
+  }
+}
+
+function drawChart(data){
+  const canvas=document.getElementById('chart');
+  const container=document.getElementById('chart-container');
+  const W=container.clientWidth||320;const H=180;
+  canvas.width=W*window.devicePixelRatio;canvas.height=H*window.devicePixelRatio;
+  canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
+
+  const PAD={top:10,right:16,bottom:30,left:36};
+  const cw=W-PAD.left-PAD.right;const ch=H-PAD.top-PAD.bottom;
+
+  const weights=data.map(d=>d.weight);
+  const minW=Math.min(...weights);const maxW=Math.max(...weights);
+  const range=maxW-minW||10;
+  const yMin=minW-range*0.1;const yMax=maxW+range*0.1;
+
+  function xPos(i){return PAD.left+i/(data.length-1)*cw;}
+  function yPos(w){return PAD.top+ch-(w-yMin)/(yMax-yMin)*ch;}
+
+  // grid lines
+  ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=PAD.top+i/4*ch;
+    ctx.beginPath();ctx.setLineDash([3,3]);ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cw,y);ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // y axis labels
+  ctx.fillStyle='#444';ctx.font=`10px 'Courier New'`;ctx.textAlign='right';
+  for(let i=0;i<=4;i++){
+    const w=yMin+(yMax-yMin)*(4-i)/4;
+    const y=PAD.top+i/4*ch;
+    ctx.fillText(Math.round(w),PAD.left-4,y+3);
+  }
+
+  // x axis labels
+  ctx.textAlign='center';
+  data.forEach((d,i)=>{
+    if(data.length<=8||i%(Math.ceil(data.length/6))===0)
+      ctx.fillText(d.date,xPos(i),H-PAD.bottom+14);
+  });
+
+  // line
+  if(data.length>1){
+    ctx.strokeStyle='#E8FF4788';ctx.lineWidth=1.5;
+    ctx.beginPath();
+    data.forEach((d,i)=>i===0?ctx.moveTo(xPos(i),yPos(d.weight)):ctx.lineTo(xPos(i),yPos(d.weight)));
+    ctx.stroke();
+  }
+
+  // dots + accent line segment to last
+  ctx.strokeStyle='#E8FF47';ctx.lineWidth=2;
+  if(data.length>1){
+    ctx.beginPath();
+    data.forEach((d,i)=>i===0?ctx.moveTo(xPos(i),yPos(d.weight)):ctx.lineTo(xPos(i),yPos(d.weight)));
+    ctx.stroke();
+  }
+  data.forEach((d,i)=>{
+    ctx.beginPath();
+    ctx.arc(xPos(i),yPos(d.weight),i===data.length-1?5:3.5,0,Math.PI*2);
+    ctx.fillStyle=i===data.length-1?'#E8FF47':'#E8FF4799';
+    ctx.fill();
+  });
+}
+
+// ── VOLUME TAB ────────────────────────────────────────────────────────────────
+function renderVolume(){
+  const maxVol=Math.max(...Object.values(volume),1);
+  const sorted=Object.entries(volume).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('vol-list').innerHTML=sorted.map(([ex,count])=>{
+    const pct=(count/maxVol*100).toFixed(1);
+    const low=count/maxVol<0.35;
+    return `<div class="vol-row" onclick="goProgress('${ex}')">
+      <div class="vol-row-header">
+        <span class="vol-name${low?' low':''}">${ex}</span>
+        <span class="vol-count${low?' low':''}">${count} sets${low?' ⚠':''}</span>
+      </div>
+      <div class="vol-track"><div class="vol-fill${low?' low':''}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  const low=sorted.filter(([,c])=>c/maxVol<0.35).sort((a,b)=>a[1]-b[1]);
+  document.getElementById('attention-list').innerHTML=low.map(([ex,count])=>
+    `<div class="attention-item">→ ${ex} <span>(${count} sets)</span></div>`
+  ).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+rawText=load()||DEFAULT_LOG;
+document.getElementById('raw-log').value=rawText;
+recompute();
+renderPRs();
+</script>
+</body>
+</html>
