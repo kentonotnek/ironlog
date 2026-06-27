@@ -177,6 +177,8 @@ body.light .build-set-input-row{border-color:#e8e8e8}
 body.light .build-switch-btn{border-color:#ddd;color:#bbb}
 body.light #build-clear-btn{border-color:#ddd;color:#bbb}
 body.light #build-save-msg{color:#4d6600}
+#build-date{color-scheme:dark}
+body.light #build-date{color-scheme:light}
 </style>
 </head>
 <body>
@@ -212,7 +214,7 @@ body.light #build-save-msg{color:#4d6600}
     <!-- PASTE mode -->
     <div id="paste-mode">
       <p class="hint">Paste your session. Your existing format works as-is.<br>
-        <span>## 25</span> → date &nbsp;·&nbsp; <span>Exercise Name</span> → exercise &nbsp;·&nbsp; <span>- 70# 10</span> → set
+        <span>## Jun 27 2026</span> → date &nbsp;·&nbsp; <span>Exercise Name</span> → exercise &nbsp;·&nbsp; <span>- 70# 10</span> → set
       </p>
       <textarea id="log-input" placeholder="## 25&#10;Dips&#10;- 50# 10&#10;- 55# 8&#10;Lat Pulldown&#10;- 140# 10&#10;- 150# 10"></textarea>
       <div style="display:flex;align-items:center;margin-top:10px">
@@ -227,8 +229,7 @@ body.light #build-save-msg{color:#4d6600}
     <div id="build-mode" style="display:none">
       <div class="build-section">
         <div class="build-label">DATE</div>
-        <input type="text" id="build-date" class="build-input" placeholder="e.g. 25" maxlength="20"
-               onkeydown="if(event.key==='Enter')document.getElementById('build-ex-input').focus()" />
+        <input type="date" id="build-date" class="build-input" />
       </div>
       <div class="build-section">
         <div class="build-label">EXERCISE</div>
@@ -449,6 +450,35 @@ function parseSessions(text){
   return sessions;
 }
 
+const MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function isoToDisplay(iso){ // "2026-06-27" → "Jun 27 2026"
+  const [y,m,d]=iso.split('-');
+  if(!y||!m||!d)return iso;
+  return `${MONTHS_SHORT[parseInt(m)-1]} ${parseInt(d)} ${y}`;
+}
+
+function parseDisplayDate(d){ // "Jun 27 2026" → timestamp; null if unrecognized
+  const parts=d.split(/[\s,]+/);
+  if(parts.length>=3){
+    const mi=MONTHS_SHORT.findIndex(mo=>mo.toLowerCase()===parts[0].toLowerCase());
+    if(mi>=0)return new Date(parseInt(parts[2]),mi,parseInt(parts[1])).getTime();
+  }
+  return null;
+}
+
+function compareDates(a,b){ // sort ascending; numeric fallback for old "25" format
+  const da=parseDisplayDate(a),db=parseDisplayDate(b);
+  if(da!=null&&db!=null)return da-db;
+  const na=parseInt(a),nb=parseInt(b);
+  return (!isNaN(na)&&!isNaN(nb))?na-nb:0;
+}
+
+function shortDate(d){ // "Jun 27 2026" → "Jun 27"; "25" → "25"
+  const parts=d.split(/[\s,]+/);
+  return (parts.length>=2&&isNaN(parseInt(parts[0])))?`${parts[0]} ${parts[1]}`:d;
+}
+
 function computePRs(sessions){
   const prs={};
   for(const s of sessions)for(const[ex,sets]of Object.entries(s.exercises))
@@ -463,7 +493,7 @@ function computeVolume(sessions){
 function computeProgress(sessions,ex){
   return sessions.filter(s=>s.exercises[ex]).map(s=>({
     date:s.date,weight:s.exercises[ex].reduce((b,x)=>x.v>b?x.v:b,0)
-  }));
+  })).sort((a,b)=>compareDates(a.date,b.date));
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
@@ -539,7 +569,11 @@ function setLogMode(mode){
   document.getElementById('build-mode').style.display=paste?'none':'block';
   document.getElementById('mode-paste-btn').classList.toggle('active',paste);
   document.getElementById('mode-build-btn').classList.toggle('active',!paste);
-  if(!paste)refreshBuilderSuggestions();
+  if(!paste){
+    refreshBuilderSuggestions();
+    const d=document.getElementById('build-date');
+    if(!d.value)d.value=new Date().toISOString().split('T')[0];
+  }
 }
 
 function refreshBuilderSuggestions(){
@@ -660,8 +694,9 @@ function renderBuilder(){
 }
 
 function builderSave(){
-  const date=document.getElementById('build-date').value.trim();
-  if(!date){alert('Enter a date first.');return;}
+  const isoVal=document.getElementById('build-date').value;
+  if(!isoVal){alert('Enter a date first.');return;}
+  const date=isoToDisplay(isoVal);
   const withSets=builder.exercises.filter(e=>e.sets.length>0);
   if(withSets.length===0){alert('Add at least one set.');return;}
   let text=`## ${date}`;
@@ -673,7 +708,7 @@ function builderSave(){
   document.getElementById('raw-log').value=rawText;
   recompute();save(rawText);
   builder={date:'',exercises:[],activeIdx:-1,editingIdx:-1};
-  document.getElementById('build-date').value='';
+  document.getElementById('build-date').value=new Date().toISOString().split('T')[0];
   renderBuilder();
   const msg=document.getElementById('build-save-msg');
   msg.classList.add('show');setTimeout(()=>msg.classList.remove('show'),2500);
@@ -700,7 +735,7 @@ function renderPRs(){
       <div class="pr-name">${ex}</div>
       <div class="pr-right">
         <span class="pr-weight">${wStr}<span class="pr-weight-unit"> lbs</span></span>
-        <div class="pr-meta">day ${pr.date} · ${vol} sets</div>
+        <div class="pr-meta">${pr.date} · ${vol} sets</div>
       </div>
     </div>`;
   }).join('');
@@ -754,7 +789,7 @@ function renderChart(){
   }
 
   // sets list
-  const sessionsWithEx=sessions.filter(s=>s.exercises[selectedEx]);
+  const sessionsWithEx=sessions.filter(s=>s.exercises[selectedEx]).sort((a,b)=>compareDates(a.date,b.date));
   if(sessionsWithEx.length){
     setsLabel.style.display='block';
     setsList.innerHTML=sessionsWithEx.map(s=>{
@@ -762,7 +797,7 @@ function renderChart(){
         const w=set.dual?`${set.v}/${set.v2}`:`${set.assisted?'-':''}${set.v}`;
         return `<span class="set-chip">${w}# × ${set.reps}</span>`;
       }).join('');
-      return `<div class="set-day"><div class="set-date">Day ${s.date}</div>${chips}</div>`;
+      return `<div class="set-day"><div class="set-date">${s.date}</div>${chips}</div>`;
     }).join('');
   } else {
     setsLabel.style.display='none';setsList.innerHTML='';
@@ -817,7 +852,7 @@ function drawChart(data){
   ctx.textAlign='center';
   data.forEach((d,i)=>{
     if(data.length<=8||i%(Math.ceil(data.length/6))===0)
-      ctx.fillText(d.date,xPos(i),H-PAD.bottom+14);
+      ctx.fillText(shortDate(d.date),xPos(i),H-PAD.bottom+14);
   });
 
   // line (dim pass)
