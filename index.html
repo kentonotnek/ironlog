@@ -115,6 +115,66 @@ canvas#chart{width:100%;height:100%}
 #attention-label{font-size:10px;color:#333;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
 .attention-item{font-size:12px;color:#e87047;margin-bottom:4px}
 .attention-item span{color:#444}
+
+/* THEME BUTTON */
+#theme-btn{background:none;border:1px solid #2a2a2a;border-radius:4px;color:#444;font-size:10px;padding:4px 8px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer}
+
+/* ── LIGHT MODE ─────────────────────────────────────────────────────────────── */
+body.light{background:#f4f4f4;color:#1a1a1a}
+body.light ::-webkit-scrollbar-thumb{background:#ccc}
+body.light #header{border-color:#ddd}
+body.light #title{color:#1a1a1a}
+body.light #subtitle{color:#aaa}
+body.light #save-indicator{color:#4d6600}
+body.light #export-btn,body.light #theme-btn{border-color:#ddd;color:#aaa}
+body.light #tabs{border-color:#ddd}
+body.light .tab-btn{color:#aaa}
+body.light .tab-btn.active{color:#4d6600;border-color:#4d6600}
+body.light .hint{color:#999}
+body.light .hint span{color:#4d6600}
+body.light #log-input{background:#fff;border-color:#ddd;color:#333}
+body.light #add-msg{color:#4d6600}
+body.light #full-log-label{color:#bbb}
+body.light #raw-log{background:#fafafa;border-color:#ddd;color:#999}
+body.light .section-label{color:#aaa}
+body.light .pr-row{background:#fff;border-color:#ddd}
+body.light .pr-row:active{background:#f5f5f5}
+body.light .pr-name{color:#1a1a1a}
+body.light .pr-weight{color:#4d6600}
+body.light .pr-weight-unit{color:#aaa}
+body.light .pr-meta{color:#bbb}
+body.light .ex-btn{background:#fff;border-color:#ddd;color:#888}
+body.light #progress-title{color:#1a1a1a}
+body.light #progress-sub{color:#aaa}
+body.light #sets-label{color:#bbb}
+body.light .set-date{color:#aaa}
+body.light .set-chip{background:#f5f5f5;border-color:#ddd;color:#666}
+body.light #no-data{color:#bbb}
+body.light #vol-hint{color:#bbb}
+body.light .vol-name{color:#333}
+body.light .vol-track{background:#e0e0e0}
+body.light #attention-box{background:#fff;border-color:#ddd}
+body.light #attention-label{color:#bbb}
+body.light .attention-item span{color:#aaa}
+body.light #log-mode-toggle{border-color:#ddd}
+body.light .mode-btn{color:#aaa}
+body.light .build-label{color:#aaa}
+body.light .build-input{background:#fff;border-color:#ddd;color:#333}
+body.light .build-input:focus{border-color:#aaa}
+body.light .build-input-sm{background:#fff;border-color:#ddd;color:#333}
+body.light .build-input-sm:focus{border-color:#aaa}
+body.light .build-add-btn{border-color:#ddd;color:#888}
+body.light .build-add-btn:active{background:#f5f5f5}
+body.light .build-ex-block{background:#fff;border-color:#ddd}
+body.light .build-ex-block.active{border-color:#aaa}
+body.light .build-ex-name{color:#1a1a1a}
+body.light .build-ex-remove{color:#ccc}
+body.light .build-set-chip{background:#f5f5f5;border-color:#ddd;color:#666}
+body.light .build-unit{color:#aaa}
+body.light .build-set-input-row{border-color:#e8e8e8}
+body.light .build-switch-btn{border-color:#ddd;color:#bbb}
+body.light #build-clear-btn{border-color:#ddd;color:#bbb}
+body.light #build-save-msg{color:#4d6600}
 </style>
 </head>
 <body>
@@ -126,6 +186,7 @@ canvas#chart{width:100%;height:100%}
   </div>
   <div style="display:flex;align-items:center;gap:10px">
     <span id="save-indicator">SAVED ✓</span>
+    <button id="theme-btn" onclick="toggleTheme()">LIGHT</button>
     <button id="export-btn" onclick="exportLog()">EXPORT</button>
   </div>
 </div>
@@ -452,6 +513,13 @@ function onRawEdit(){
   recompute();save(rawText);
 }
 
+function toggleTheme(){
+  const light=document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent=light?'DARK':'LIGHT';
+  try{localStorage.setItem('ironlog_theme',light?'light':'dark');}catch(e){}
+  if(selectedEx)drawChart(computeProgress(sessions,selectedEx));
+}
+
 function exportLog(){
   const blob=new Blob([rawText],{type:'text/plain'});
   const url=URL.createObjectURL(blob);
@@ -674,6 +742,14 @@ function drawChart(data){
   const ctx=canvas.getContext('2d');
   ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
 
+  const light=document.body.classList.contains('light');
+  const cGrid=light?'#e0e0e0':'#1e1e1e';
+  const cLabel=light?'#aaa':'#444';
+  const cLineDim=light?'#4d660055':'#E8FF4755';
+  const cLine=light?'#4d6600':'#E8FF47';
+  const cDot=light?'#4d6600':'#E8FF47';
+  const cDotDim=light?'#4d660077':'#E8FF4799';
+
   const PAD={top:10,right:16,bottom:30,left:36};
   const cw=W-PAD.left-PAD.right;const ch=H-PAD.top-PAD.bottom;
 
@@ -686,7 +762,7 @@ function drawChart(data){
   function yPos(w){return PAD.top+ch-(w-yMin)/(yMax-yMin)*ch;}
 
   // grid lines
-  ctx.strokeStyle='#1e1e1e';ctx.lineWidth=1;
+  ctx.strokeStyle=cGrid;ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
     const y=PAD.top+i/4*ch;
     ctx.beginPath();ctx.setLineDash([3,3]);ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cw,y);ctx.stroke();
@@ -694,7 +770,7 @@ function drawChart(data){
   ctx.setLineDash([]);
 
   // y axis labels
-  ctx.fillStyle='#444';ctx.font=`10px 'Courier New'`;ctx.textAlign='right';
+  ctx.fillStyle=cLabel;ctx.font=`10px 'Courier New'`;ctx.textAlign='right';
   for(let i=0;i<=4;i++){
     const w=yMin+(yMax-yMin)*(4-i)/4;
     const y=PAD.top+i/4*ch;
@@ -708,16 +784,16 @@ function drawChart(data){
       ctx.fillText(d.date,xPos(i),H-PAD.bottom+14);
   });
 
-  // line
+  // line (dim pass)
   if(data.length>1){
-    ctx.strokeStyle='#E8FF4788';ctx.lineWidth=1.5;
+    ctx.strokeStyle=cLineDim;ctx.lineWidth=1.5;
     ctx.beginPath();
     data.forEach((d,i)=>i===0?ctx.moveTo(xPos(i),yPos(d.weight)):ctx.lineTo(xPos(i),yPos(d.weight)));
     ctx.stroke();
   }
 
-  // dots + accent line segment to last
-  ctx.strokeStyle='#E8FF47';ctx.lineWidth=2;
+  // line (solid pass) + dots
+  ctx.strokeStyle=cLine;ctx.lineWidth=2;
   if(data.length>1){
     ctx.beginPath();
     data.forEach((d,i)=>i===0?ctx.moveTo(xPos(i),yPos(d.weight)):ctx.lineTo(xPos(i),yPos(d.weight)));
@@ -726,7 +802,7 @@ function drawChart(data){
   data.forEach((d,i)=>{
     ctx.beginPath();
     ctx.arc(xPos(i),yPos(d.weight),i===data.length-1?5:3.5,0,Math.PI*2);
-    ctx.fillStyle=i===data.length-1?'#E8FF47':'#E8FF4799';
+    ctx.fillStyle=i===data.length-1?cDot:cDotDim;
     ctx.fill();
   });
 }
@@ -758,6 +834,10 @@ rawText=load()||DEFAULT_LOG;
 document.getElementById('raw-log').value=rawText;
 recompute();
 renderPRs();
+try{if(localStorage.getItem('ironlog_theme')==='light'){
+  document.body.classList.add('light');
+  document.getElementById('theme-btn').textContent='DARK';
+}}catch(e){}
 </script>
 </body>
 </html>
