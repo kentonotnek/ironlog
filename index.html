@@ -620,7 +620,10 @@ function renderBuilder(){
   const preview=document.getElementById('build-preview');
   const actions=document.getElementById('build-actions');
   const sy=window.scrollY;
-  if(builder.exercises.length===0){preview.innerHTML='';actions.style.display='none';return;}
+  // blur first so the browser doesn't scroll-to-destroyed-input on innerHTML swap
+  if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
+  window.scrollTo(0,sy);
+  if(builder.exercises.length===0){preview.innerHTML='';actions.style.display='none';window.scrollTo(0,sy);return;}
   preview.innerHTML=builder.exercises.map((ex,exIdx)=>{
     const isActive=exIdx===builder.activeIdx;
     const isEditing=exIdx===builder.editingIdx;
@@ -653,7 +656,7 @@ function renderBuilder(){
     </div>`;
   }).join('');
   actions.style.display='block';
-  requestAnimationFrame(()=>window.scrollTo(0,sy));
+  window.scrollTo(0,sy);
 }
 
 function builderSave(){
