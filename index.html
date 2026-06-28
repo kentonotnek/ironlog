@@ -7,10 +7,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <title>Iron Log</title>
 <style>
+:root{--accent:#E8FF47;--accent-press:#d4eb3f;--accent-dim:rgba(232,255,71,0.4);--accent-faint:rgba(232,255,71,0.06);--font:'Courier New',monospace}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:#0f0f0f;color:#e8e8e8;font-family:'Courier New',monospace;min-height:100vh;padding-bottom:80px}
-button{font-family:'Courier New',monospace;cursor:pointer}
-textarea{font-family:'Courier New',monospace;-webkit-appearance:none}
+body{background:#0f0f0f;color:#e8e8e8;font-family:var(--font);min-height:100vh;padding-bottom:80px}
+button{font-family:var(--font);cursor:pointer}
+textarea{font-family:var(--font);-webkit-appearance:none}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#555}
 
 #header{padding:20px 16px 12px;border-bottom:1px solid #2a2a2a;display:flex;align-items:baseline;justify-content:space-between}
@@ -20,20 +21,21 @@ textarea{font-family:'Courier New',monospace;-webkit-appearance:none}
 #save-indicator{font-size:10px;color:#5c5;letter-spacing:1px;opacity:0;transition:opacity 0.3s}
 #save-indicator.show{opacity:1}
 #export-btn{background:none;border:1px solid #2a2a2a;border-radius:4px;color:#999;font-size:10px;padding:4px 8px;letter-spacing:1px}
+#settings-btn{background:none;border:1px solid #2a2a2a;border-radius:4px;color:#999;font-size:10px;padding:4px 8px;letter-spacing:1px;font-family:var(--font);cursor:pointer}
 
 #tabs{display:flex;border-bottom:1px solid #2a2a2a;padding:0 16px;overflow-x:auto}
 .tab-btn{background:none;border:none;padding:11px 12px 9px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#999;border-bottom:2px solid transparent;white-space:nowrap;transition:color 0.15s}
-.tab-btn.active{color:#E8FF47;border-bottom:2px solid #E8FF47}
+.tab-btn.active{color:var(--accent);border-bottom:2px solid var(--accent)}
 
 #content{padding:16px}
 .panel{display:none}.panel.active{display:block}
 
 /* LOG PANEL */
 .hint{color:#aaa;font-size:11px;line-height:1.9;margin-bottom:14px}
-.hint span{color:#E8FF47}
+.hint span{color:var(--accent)}
 #log-input{width:100%;min-height:180px;background:#181818;border:1px solid #2a2a2a;border-radius:8px;color:#ddd;font-size:13px;padding:12px;resize:vertical;outline:none;display:block}
-#add-btn{background:#E8FF47;color:#000;border:none;border-radius:6px;padding:10px 22px;font-size:12px;font-weight:700;letter-spacing:1px;margin-top:10px}
-#add-msg{color:#E8FF47;font-size:12px;margin-left:12px;opacity:0;transition:opacity 0.3s}
+#add-btn{background:var(--accent);color:#000;border:none;border-radius:6px;padding:10px 22px;font-size:12px;font-weight:700;letter-spacing:1px;margin-top:10px}
+#add-msg{color:var(--accent);font-size:12px;margin-left:12px;opacity:0;transition:opacity 0.3s}
 #add-msg.show{opacity:1}
 #full-log-label{font-size:10px;color:#888;letter-spacing:2px;text-transform:uppercase;margin:24px 0 8px}
 #raw-log{width:100%;min-height:240px;background:#111;border:1px solid #2a2a2a;border-radius:8px;color:#aaa;font-size:11px;padding:12px;resize:vertical;outline:none;display:block}
@@ -43,17 +45,17 @@ textarea{font-family:'Courier New',monospace;-webkit-appearance:none}
 #pr-list{display:flex;flex-direction:column;gap:2px}
 .pr-row{background:#181818;border:1px solid #2a2a2a;border-radius:6px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;position:relative;overflow:hidden;cursor:pointer}
 .pr-row:active{background:#1e1e1e}
-.pr-bar{position:absolute;left:0;top:0;bottom:0;background:rgba(232,255,71,0.05);pointer-events:none}
+.pr-bar{position:absolute;left:0;top:0;bottom:0;background:var(--accent-faint);pointer-events:none}
 .pr-name{font-size:12px;color:#eee;font-weight:600;position:relative}
 .pr-right{text-align:right;flex-shrink:0;margin-left:10px;position:relative}
-.pr-weight{color:#E8FF47;font-size:14px;font-weight:700}
+.pr-weight{color:var(--accent);font-size:14px;font-weight:700}
 .pr-weight-unit{font-size:10px;color:#999;font-weight:400}
 .pr-meta{font-size:10px;color:#888;margin-top:1px}
 
 /* PROGRESS PANEL */
 #ex-buttons{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:20px}
-.ex-btn{background:#181818;color:#aaa;border:1px solid #2a2a2a;border-radius:4px;padding:4px 9px;font-size:11px;font-family:'Courier New',monospace}
-.ex-btn.active{background:#E8FF47;color:#000;border-color:#E8FF47;font-weight:700}
+.ex-btn{background:#181818;color:#aaa;border:1px solid #2a2a2a;border-radius:4px;padding:4px 9px;font-size:11px;font-family:var(--font)}
+.ex-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
 #progress-title{font-size:15px;font-weight:700;color:#fff;margin-bottom:2px}
 #progress-sub{font-size:10px;color:#999;margin-bottom:16px}
 #chart-container{width:100%;height:180px;position:relative;margin-bottom:20px}
@@ -66,18 +68,19 @@ canvas#chart{width:100%;height:100%}
 
 /* LOG MODE TOGGLE */
 #log-mode-toggle{display:flex;border:1px solid #2a2a2a;border-radius:6px;overflow:hidden;margin-bottom:16px;width:fit-content}
-.mode-btn{background:none;border:none;padding:7px 18px;font-size:11px;letter-spacing:1.5px;color:#999;font-family:'Courier New',monospace;cursor:pointer}
-.mode-btn.active{background:#E8FF47;color:#000;font-weight:700}
+.mode-btn{background:none;border:none;padding:7px 18px;font-size:11px;letter-spacing:1.5px;color:#999;font-family:var(--font);cursor:pointer}
+.mode-btn.active{background:var(--accent);color:#000;font-weight:700}
+
 /* BUILD FORM */
 .build-section{margin-bottom:14px}
 .build-label{font-size:10px;color:#999;letter-spacing:2px;text-transform:uppercase;display:block;margin-bottom:6px}
-.build-input{width:100%;background:#181818;border:1px solid #2a2a2a;border-radius:6px;color:#ddd;font-size:13px;padding:9px 11px;font-family:'Courier New',monospace;outline:none}
+.build-input{width:100%;background:#181818;border:1px solid #2a2a2a;border-radius:6px;color:#ddd;font-size:13px;padding:9px 11px;font-family:var(--font);outline:none}
 .build-input:focus{border-color:#666}
 .build-row{display:flex;gap:8px;align-items:center}
-.build-input-sm{width:72px;background:#181818;border:1px solid #2a2a2a;border-radius:6px;color:#ddd;font-size:13px;padding:9px 10px;font-family:'Courier New',monospace;outline:none;-moz-appearance:textfield}
+.build-input-sm{width:72px;background:#181818;border:1px solid #2a2a2a;border-radius:6px;color:#ddd;font-size:13px;padding:9px 10px;font-family:var(--font);outline:none;-moz-appearance:textfield}
 .build-input-sm::-webkit-outer-spin-button,.build-input-sm::-webkit-inner-spin-button{-webkit-appearance:none}
 .build-input-sm:focus{border-color:#666}
-.build-add-btn{flex-shrink:0;background:none;border:1px solid #444;border-radius:6px;color:#bbb;font-size:11px;padding:9px 13px;font-family:'Courier New',monospace;letter-spacing:0.5px;white-space:nowrap;cursor:pointer}
+.build-add-btn{flex-shrink:0;background:none;border:1px solid #444;border-radius:6px;color:#bbb;font-size:11px;padding:9px 13px;font-family:var(--font);letter-spacing:0.5px;white-space:nowrap;cursor:pointer}
 .build-add-btn:active{background:#1e1e1e}
 .build-ex-block{background:#181818;border:1px solid #2a2a2a;border-radius:8px;padding:12px;margin-bottom:8px}
 .build-ex-block.active{border-color:#555}
@@ -87,18 +90,18 @@ canvas#chart{width:100%;height:100%}
 .build-ex-remove:active{color:#bbb}
 .build-set-chips{display:flex;flex-wrap:wrap;gap:4px}
 .build-set-chip{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:3px;padding:3px 7px;font-size:11px;color:#bbb;cursor:pointer}
-.build-set-chip:active{border-color:#666;color:#E8FF47}
+.build-set-chip:active{border-color:#666;color:var(--accent)}
 .build-unit{font-size:11px;color:#999;flex-shrink:0}
 .build-set-input-row{display:flex;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #222}
-.build-switch-btn{display:block;width:100%;background:none;border:1px dashed #333;border-radius:4px;color:#888;font-size:10px;letter-spacing:1px;padding:6px;font-family:'Courier New',monospace;cursor:pointer;margin-top:8px}
+.build-switch-btn{display:block;width:100%;background:none;border:1px dashed #333;border-radius:4px;color:#888;font-size:10px;letter-spacing:1px;padding:6px;font-family:var(--font);cursor:pointer;margin-top:8px}
 .build-switch-btn:active{color:#bbb;border-color:#555}
-#build-save-btn{display:block;width:100%;background:#E8FF47;color:#000;border:none;border-radius:6px;padding:11px;font-size:12px;font-weight:700;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer}
-#build-save-btn:active{background:#d4eb3f}
-#build-clear-btn{display:block;width:100%;background:none;border:1px solid #2a2a2a;border-radius:6px;color:#888;font-size:11px;padding:9px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer;margin-top:8px}
+#build-save-btn{display:block;width:100%;background:var(--accent);color:#000;border:none;border-radius:6px;padding:11px;font-size:12px;font-weight:700;letter-spacing:1px;font-family:var(--font);cursor:pointer}
+#build-save-btn:active{background:var(--accent-press)}
+#build-clear-btn{display:block;width:100%;background:none;border:1px solid #2a2a2a;border-radius:6px;color:#888;font-size:11px;padding:9px;letter-spacing:1px;font-family:var(--font);cursor:pointer;margin-top:8px}
 #build-clear-btn:active{color:#bbb}
-#build-save-msg{color:#E8FF47;font-size:12px;margin-top:10px;text-align:center;opacity:0;transition:opacity 0.3s}
+#build-save-msg{color:var(--accent);font-size:12px;margin-top:10px;text-align:center;opacity:0;transition:opacity 0.3s}
 #build-save-msg.show{opacity:1}
-.build-ex-edit{flex:1;min-width:0;background:#121212;border:1px solid #666;border-radius:4px;color:#eee;font-size:13px;font-weight:700;padding:5px 8px;font-family:'Courier New',monospace;outline:none}
+.build-ex-edit{flex:1;min-width:0;background:#121212;border:1px solid #666;border-radius:4px;color:#eee;font-size:13px;font-weight:700;padding:5px 8px;font-family:var(--font);outline:none}
 body.light .build-ex-edit{background:#fff;border-color:#999;color:#1a1a1a}
 
 /* VOLUME PANEL */
@@ -111,15 +114,42 @@ body.light .build-ex-edit{background:#fff;border-color:#999;color:#1a1a1a}
 .vol-count{font-size:10px;color:#999}
 .vol-count.low{color:#e87047}
 .vol-track{height:5px;background:#1a1a1a;border-radius:3px;overflow:hidden}
-.vol-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#E8FF4766,#E8FF47)}
+.vol-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--accent-dim),var(--accent))}
 .vol-fill.low{background:linear-gradient(90deg,#e87047,#e8b047)}
 #attention-box{margin-top:20px;padding:12px;background:#181818;border-radius:8px;border:1px solid #2a2a2a}
 #attention-label{font-size:10px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
 .attention-item{font-size:12px;color:#e87047;margin-bottom:4px}
 .attention-item span{color:#999}
 
-/* THEME BUTTON */
-#theme-btn{background:none;border:1px solid #2a2a2a;border-radius:4px;color:#999;font-size:10px;padding:4px 8px;letter-spacing:1px;font-family:'Courier New',monospace;cursor:pointer}
+/* SETTINGS DRAWER */
+#settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:100;display:none}
+#settings-overlay.open{display:block}
+#settings-drawer{position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;border-top:1px solid #333;border-radius:16px 16px 0 0;z-index:101;padding:0 16px 44px;transform:translateY(100%);transition:transform 0.25s ease;max-height:88vh;overflow-y:auto}
+#settings-drawer.open{transform:translateY(0)}
+#settings-header{display:flex;justify-content:space-between;align-items:center;padding:16px 0 14px;border-bottom:1px solid #2a2a2a;margin-bottom:18px}
+#settings-title{font-size:11px;letter-spacing:2px;color:#999;text-transform:uppercase}
+#settings-close{background:none;border:none;color:#666;font-size:22px;line-height:1;padding:0 2px;cursor:pointer}
+.settings-section{margin-bottom:22px}
+.settings-label{font-size:10px;color:#777;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.settings-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.settings-chip{background:#111;border:1px solid #333;border-radius:6px;color:#888;font-size:11px;padding:7px 14px;font-family:var(--font);letter-spacing:0.5px;cursor:pointer;transition:border-color 0.12s,color 0.12s}
+.settings-chip.active{border-color:var(--accent);color:var(--accent)}
+.accent-swatch{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform 0.12s,box-shadow 0.12s;flex-shrink:0}
+.accent-swatch.active{transform:scale(1.2);box-shadow:0 0 0 2px #0f0f0f,0 0 0 4px #ddd}
+
+/* SIZE SCALING */
+body.size-sm .pr-name{font-size:11px}
+body.size-sm .pr-weight{font-size:12px}
+body.size-sm .pr-meta,body.size-sm .section-label,body.size-sm .vol-count,body.size-sm .set-date{font-size:9px}
+body.size-sm .set-chip,body.size-sm .ex-btn,body.size-sm .hint{font-size:10px}
+body.size-sm .build-ex-name,body.size-sm .vol-name{font-size:11px}
+body.size-sm .build-input,body.size-sm .build-input-sm,body.size-sm #log-input,body.size-sm #raw-log{font-size:11px}
+body.size-lg .pr-name{font-size:14px}
+body.size-lg .pr-weight{font-size:17px}
+body.size-lg .pr-meta,body.size-lg .section-label,body.size-lg .vol-count,body.size-lg .set-date{font-size:12px}
+body.size-lg .set-chip,body.size-lg .ex-btn,body.size-lg .hint{font-size:13px}
+body.size-lg .build-ex-name,body.size-lg .vol-name{font-size:15px}
+body.size-lg .build-input,body.size-lg .build-input-sm,body.size-lg #log-input,body.size-lg #raw-log{font-size:15px}
 
 /* ── LIGHT MODE ─────────────────────────────────────────────────────────────── */
 body.light{background:#f4f4f4;color:#111}
@@ -128,24 +158,27 @@ body.light #header{border-color:#d0d0d0}
 body.light #title{color:#111}
 body.light #subtitle{color:#666}
 body.light #save-indicator{color:#3a7000}
-body.light #export-btn,body.light #theme-btn{border-color:#d0d0d0;color:#666}
+body.light #export-btn,body.light #settings-btn{border-color:#d0d0d0;color:#666}
 body.light #tabs{border-color:#d0d0d0}
 body.light .tab-btn{color:#666}
 body.light .tab-btn.active{color:#3a7000;border-color:#3a7000}
 body.light .hint{color:#555}
 body.light .hint span{color:#3a7000}
 body.light #log-input{background:#fff;border-color:#d0d0d0;color:#111}
+body.light #add-btn{background:#3a7000;color:#fff}
 body.light #add-msg{color:#3a7000}
 body.light #full-log-label{color:#888}
 body.light #raw-log{background:#fafafa;border-color:#d0d0d0;color:#555}
 body.light .section-label{color:#666}
 body.light .pr-row{background:#fff;border-color:#d0d0d0}
 body.light .pr-row:active{background:#f0f0f0}
+body.light .pr-bar{background:rgba(58,112,0,0.06)}
 body.light .pr-name{color:#111}
 body.light .pr-weight{color:#3a7000}
 body.light .pr-weight-unit{color:#666}
 body.light .pr-meta{color:#666}
 body.light .ex-btn{background:#fff;border-color:#d0d0d0;color:#555}
+body.light .ex-btn.active{background:#3a7000;color:#fff;border-color:#3a7000}
 body.light #progress-title{color:#111}
 body.light #progress-sub{color:#666}
 body.light #sets-label{color:#888}
@@ -155,11 +188,13 @@ body.light #no-data{color:#888}
 body.light #vol-hint{color:#888}
 body.light .vol-name{color:#222}
 body.light .vol-track{background:#ddd}
+body.light .vol-fill{background:linear-gradient(90deg,rgba(58,112,0,0.4),#3a7000)}
 body.light #attention-box{background:#fff;border-color:#d0d0d0}
 body.light #attention-label{color:#888}
 body.light .attention-item span{color:#666}
 body.light #log-mode-toggle{border-color:#d0d0d0}
 body.light .mode-btn{color:#666}
+body.light .mode-btn.active{background:#3a7000;color:#fff}
 body.light .build-label{color:#666}
 body.light .build-input{background:#fff;border-color:#d0d0d0;color:#111}
 body.light .build-input:focus{border-color:#999}
@@ -176,7 +211,18 @@ body.light .build-unit{color:#666}
 body.light .build-set-input-row{border-color:#e0e0e0}
 body.light .build-switch-btn{border-color:#d0d0d0;color:#888}
 body.light #build-clear-btn{border-color:#d0d0d0;color:#888}
+body.light #build-save-btn{background:#3a7000;color:#fff}
+body.light #build-save-btn:active{background:#2d5500}
 body.light #build-save-msg{color:#3a7000}
+body.light #settings-drawer{background:#f8f8f8;border-color:#d0d0d0}
+body.light #settings-header{border-color:#d0d0d0}
+body.light #settings-title{color:#888}
+body.light #settings-close{color:#aaa}
+body.light .settings-label{color:#888}
+body.light .settings-chip{background:#fff;border-color:#d0d0d0;color:#666}
+body.light .settings-chip.active{border-color:#3a7000;color:#3a7000}
+body.light #settings-overlay{background:rgba(0,0,0,0.3)}
+body.light .accent-swatch.active{box-shadow:0 0 0 2px #f4f4f4,0 0 0 4px #333}
 #build-date{color-scheme:dark}
 body.light #build-date{color-scheme:light}
 </style>
@@ -188,10 +234,10 @@ body.light #build-date{color-scheme:light}
     <div id="title">IRON LOG</div>
     <div id="subtitle">— sessions</div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px">
+  <div style="display:flex;align-items:center;gap:8px">
     <span id="save-indicator">SAVED ✓</span>
-    <button id="theme-btn" onclick="toggleTheme()">LIGHT</button>
     <button id="export-btn" onclick="exportLog()">EXPORT</button>
+    <button id="settings-btn" onclick="openSettings()">⚙ SETTINGS</button>
   </div>
 </div>
 
@@ -279,9 +325,59 @@ body.light #build-date{color-scheme:light}
   </div>
 </div>
 
+<!-- SETTINGS DRAWER -->
+<div id="settings-overlay" onclick="closeSettings()"></div>
+<div id="settings-drawer">
+  <div id="settings-header">
+    <span id="settings-title">SETTINGS</span>
+    <button id="settings-close" onclick="closeSettings()">×</button>
+  </div>
+  <div class="settings-section">
+    <div class="settings-label">THEME</div>
+    <div class="settings-chips">
+      <button class="settings-chip" id="chip-dark" onclick="setTheme('dark')">DARK</button>
+      <button class="settings-chip" id="chip-light" onclick="setTheme('light')">LIGHT</button>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-label">ACCENT COLOR</div>
+    <div class="settings-chips">
+      <div class="accent-swatch" id="swatch-yellow" style="background:#E8FF47" onclick="setAccent('yellow','#E8FF47','#d4eb3f')" title="Yellow"></div>
+      <div class="accent-swatch" id="swatch-blue" style="background:#47c8ff" onclick="setAccent('blue','#47c8ff','#30b0e8')" title="Blue"></div>
+      <div class="accent-swatch" id="swatch-orange" style="background:#ff8c47" onclick="setAccent('orange','#ff8c47','#e87030')" title="Orange"></div>
+      <div class="accent-swatch" id="swatch-green" style="background:#6dff8c" onclick="setAccent('green','#6dff8c','#50e070')" title="Green"></div>
+      <div class="accent-swatch" id="swatch-red" style="background:#ff5c6e" onclick="setAccent('red','#ff5c6e','#e84455')" title="Red"></div>
+      <div class="accent-swatch" id="swatch-purple" style="background:#c47aff" onclick="setAccent('purple','#c47aff','#aa60e8')" title="Purple"></div>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-label">FONT</div>
+    <div class="settings-chips">
+      <button class="settings-chip" id="chip-font-mono" onclick="setFont('mono')" style="font-family:'Courier New',monospace">MONO</button>
+      <button class="settings-chip" id="chip-font-sans" onclick="setFont('sans')" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">SANS</button>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-label">TEXT SIZE</div>
+    <div class="settings-chips">
+      <button class="settings-chip" id="chip-size-sm" onclick="setSize('sm')">SMALL</button>
+      <button class="settings-chip" id="chip-size-md" onclick="setSize('md')">MEDIUM</button>
+      <button class="settings-chip" id="chip-size-lg" onclick="setSize('lg')">LARGE</button>
+    </div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-label">WEIGHT UNITS</div>
+    <div class="settings-chips">
+      <button class="settings-chip" id="chip-unit-lbs" onclick="setUnit('lbs')">LBS</button>
+      <button class="settings-chip" id="chip-unit-kg" onclick="setUnit('kg')">KG</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── STORAGE ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ironlog_v1';
+const SETTINGS_KEY = 'ironlog_settings';
 
 const DEFAULT_LOG = `## 5
 Dips
@@ -452,13 +548,13 @@ function parseSessions(text){
 
 const MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-function isoToDisplay(iso){ // "2026-06-27" → "Jun 27 2026"
+function isoToDisplay(iso){
   const [y,m,d]=iso.split('-');
   if(!y||!m||!d)return iso;
   return `${MONTHS_SHORT[parseInt(m)-1]} ${parseInt(d)} ${y}`;
 }
 
-function parseDisplayDate(d){ // "Jun 27 2026" → timestamp; null if unrecognized
+function parseDisplayDate(d){
   const parts=d.split(/[\s,]+/);
   if(parts.length>=3){
     const mi=MONTHS_SHORT.findIndex(mo=>mo.toLowerCase()===parts[0].toLowerCase());
@@ -467,14 +563,14 @@ function parseDisplayDate(d){ // "Jun 27 2026" → timestamp; null if unrecogniz
   return null;
 }
 
-function compareDates(a,b){ // sort ascending; numeric fallback for old "25" format
+function compareDates(a,b){
   const da=parseDisplayDate(a),db=parseDisplayDate(b);
   if(da!=null&&db!=null)return da-db;
   const na=parseInt(a),nb=parseInt(b);
   return (!isNaN(na)&&!isNaN(nb))?na-nb:0;
 }
 
-function shortDate(d){ // "Jun 27 2026" → "Jun 27"; "25" → "25"
+function shortDate(d){
   const parts=d.split(/[\s,]+/);
   return (parts.length>=2&&isNaN(parseInt(parts[0])))?`${parts[0]} ${parts[1]}`:d;
 }
@@ -494,6 +590,95 @@ function computeProgress(sessions,ex){
   return sessions.filter(s=>s.exercises[ex]).map(s=>({
     date:s.date,weight:s.exercises[ex].reduce((b,x)=>x.v>b?x.v:b,0)
   })).sort((a,b)=>compareDates(a.date,b.date));
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
+let settings={theme:'dark',accent:'yellow',accentColor:'#E8FF47',accentPress:'#d4eb3f',font:'mono',size:'md',unit:'lbs'};
+
+function hexToRgba(hex,a){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function loadSettings(){
+  try{
+    // migrate old theme key
+    const oldTheme=localStorage.getItem('ironlog_theme');
+    if(oldTheme)settings.theme=oldTheme;
+    const s=localStorage.getItem(SETTINGS_KEY);
+    if(s)settings={...settings,...JSON.parse(s)};
+  }catch(e){}
+}
+
+function saveSettings(){
+  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch(e){}
+}
+
+function applySettings(){
+  const b=document.body;
+  const root=document.documentElement;
+  // theme
+  b.classList.toggle('light',settings.theme==='light');
+  // accent (dark mode only — light mode uses hardcoded green via CSS)
+  if(settings.theme!=='light'){
+    root.style.setProperty('--accent',settings.accentColor);
+    root.style.setProperty('--accent-press',settings.accentPress);
+    root.style.setProperty('--accent-dim',hexToRgba(settings.accentColor,0.4));
+    root.style.setProperty('--accent-faint',hexToRgba(settings.accentColor,0.06));
+  } else {
+    root.style.removeProperty('--accent');
+    root.style.removeProperty('--accent-press');
+    root.style.removeProperty('--accent-dim');
+    root.style.removeProperty('--accent-faint');
+  }
+  // font
+  root.style.setProperty('--font',settings.font==='sans'?"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif":"'Courier New',monospace");
+  // size
+  b.classList.remove('size-sm','size-lg');
+  if(settings.size!=='md')b.classList.add('size-'+settings.size);
+  // update chips
+  syncSettingsUI();
+  // redraw
+  if(selectedEx)drawChart(computeProgress(sessions,selectedEx));
+}
+
+function syncSettingsUI(){
+  const chip=(id,active)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',active);};
+  chip('chip-dark',settings.theme==='dark');
+  chip('chip-light',settings.theme==='light');
+  ['yellow','blue','orange','green','red','purple'].forEach(a=>{
+    const el=document.getElementById('swatch-'+a);
+    if(el)el.classList.toggle('active',settings.accent===a);
+  });
+  chip('chip-font-mono',settings.font==='mono');
+  chip('chip-font-sans',settings.font==='sans');
+  chip('chip-size-sm',settings.size==='sm');
+  chip('chip-size-md',settings.size==='md');
+  chip('chip-size-lg',settings.size==='lg');
+  chip('chip-unit-lbs',settings.unit==='lbs');
+  chip('chip-unit-kg',settings.unit==='kg');
+}
+
+function openSettings(){
+  syncSettingsUI();
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-drawer').classList.add('open');
+}
+
+function closeSettings(){
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-drawer').classList.remove('open');
+}
+
+function setTheme(t){settings.theme=t;saveSettings();applySettings();renderPRs();}
+function setAccent(name,color,press){settings.accent=name;settings.accentColor=color;settings.accentPress=press;saveSettings();applySettings();}
+function setFont(f){settings.font=f;saveSettings();applySettings();}
+function setSize(s){settings.size=s;saveSettings();applySettings();}
+function setUnit(u){settings.unit=u;saveSettings();syncSettingsUI();renderPRs();if(selectedEx)renderChart();}
+
+function fmtWeight(v){
+  if(settings.unit==='kg')return(v*0.4536).toFixed(1);
+  return String(v);
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
@@ -543,13 +728,6 @@ function addSession(){
 function onRawEdit(){
   rawText=document.getElementById('raw-log').value;
   recompute();save(rawText);
-}
-
-function toggleTheme(){
-  const light=document.body.classList.toggle('light');
-  document.getElementById('theme-btn').textContent=light?'DARK':'LIGHT';
-  try{localStorage.setItem('ironlog_theme',light?'light':'dark');}catch(e){}
-  if(selectedEx)drawChart(computeProgress(sessions,selectedEx));
 }
 
 function exportLog(){
@@ -658,12 +836,13 @@ function renderBuilder(){
   if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
   window.scrollTo(0,sy);
   if(builder.exercises.length===0){preview.innerHTML='';actions.style.display='none';window.scrollTo(0,sy);return;}
+  const unitLbl=settings.unit;
   preview.innerHTML=builder.exercises.map((ex,exIdx)=>{
     const isActive=exIdx===builder.activeIdx;
     const isEditing=exIdx===builder.editingIdx;
     const chips=ex.sets.map((s,sIdx)=>
       `<span class="build-set-chip" title="tap to remove"
-             onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.weight}# × ${s.reps}</span>`
+             onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.weight} ${unitLbl} × ${s.reps}</span>`
     ).join('');
     const nameEl=isEditing
       ?`<input id="build-ex-edit" class="build-ex-edit" value="${ex.name.replace(/"/g,'&quot;')}"
@@ -672,9 +851,9 @@ function renderBuilder(){
       :`<span class="build-ex-name" onclick="builderStartEditEx(${exIdx})" title="tap to rename" style="cursor:text">${ex.name}</span>`;
     const footer=isActive
       ?`<div class="build-set-input-row">
-          <input type="number" id="build-weight" class="build-input-sm" placeholder="lbs" min="0" step="2.5"
+          <input type="number" id="build-weight" class="build-input-sm" placeholder="${unitLbl}" min="0" step="2.5"
                  onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
-          <span class="build-unit">#</span>
+          <span class="build-unit">${unitLbl}</span>
           <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
                  onkeydown="if(event.key==='Enter')builderAddSet()" />
           <button class="build-add-btn" onclick="builderAddSet()">+ SET</button>
@@ -729,12 +908,12 @@ function renderPRs(){
     const pr=prs[ex];
     const vol=volume[ex]||0;
     const pct=(vol/maxVol*100).toFixed(1);
-    const wStr=pr.dual?`${pr.v}/${pr.v2}`:`${pr.v}`;
+    const wStr=pr.dual?`${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}`:`${fmtWeight(pr.v)}`;
     return `<div class="pr-row" onclick="goProgress('${ex}')">
       <div class="pr-bar" style="width:${pct}%"></div>
       <div class="pr-name">${ex}</div>
       <div class="pr-right">
-        <span class="pr-weight">${wStr}<span class="pr-weight-unit"> lbs</span></span>
+        <span class="pr-weight">${wStr}<span class="pr-weight-unit"> ${settings.unit}</span></span>
         <div class="pr-meta">${pr.date} · ${vol} sets</div>
       </div>
     </div>`;
@@ -784,18 +963,17 @@ function renderChart(){
   } else {
     noData.textContent='';
     chartContainer.style.display='block';
-    document.getElementById('progress-sub').textContent=`Max weight per session · ${data.length} data points`;
+    document.getElementById('progress-sub').textContent=`Max weight per session (${settings.unit}) · ${data.length} data points`;
     drawChart(data);
   }
 
-  // sets list
   const sessionsWithEx=sessions.filter(s=>s.exercises[selectedEx]).sort((a,b)=>compareDates(a.date,b.date));
   if(sessionsWithEx.length){
     setsLabel.style.display='block';
     setsList.innerHTML=sessionsWithEx.map(s=>{
       const chips=s.exercises[selectedEx].map(set=>{
-        const w=set.dual?`${set.v}/${set.v2}`:`${set.assisted?'-':''}${set.v}`;
-        return `<span class="set-chip">${w}# × ${set.reps}</span>`;
+        const wRaw=set.dual?`${fmtWeight(set.v)}/${fmtWeight(set.v2)}`:`${set.assisted?'-':''}${fmtWeight(set.v)}`;
+        return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}</span>`;
       }).join('');
       return `<div class="set-day"><div class="set-date">${s.date}</div>${chips}</div>`;
     }).join('');
@@ -814,14 +992,15 @@ function drawChart(data){
   ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
 
   const light=document.body.classList.contains('light');
+  const ac=settings.accentColor;
   const cGrid=light?'#e0e0e0':'#1e1e1e';
   const cLabel=light?'#777':'#777';
-  const cLineDim=light?'#4d660055':'#E8FF4755';
-  const cLine=light?'#4d6600':'#E8FF47';
-  const cDot=light?'#4d6600':'#E8FF47';
-  const cDotDim=light?'#4d660077':'#E8FF4799';
+  const cLine=light?'#3a7000':ac;
+  const cDot=light?'#3a7000':ac;
+  const cLineDim=light?'rgba(58,112,0,0.33)':hexToRgba(ac,0.33);
+  const cDotDim=light?'rgba(58,112,0,0.6)':hexToRgba(ac,0.6);
 
-  const PAD={top:10,right:16,bottom:30,left:36};
+  const PAD={top:10,right:16,bottom:30,left:40};
   const cw=W-PAD.left-PAD.right;const ch=H-PAD.top-PAD.bottom;
 
   const weights=data.map(d=>d.weight);
@@ -843,9 +1022,10 @@ function drawChart(data){
   // y axis labels
   ctx.fillStyle=cLabel;ctx.font=`10px 'Courier New'`;ctx.textAlign='right';
   for(let i=0;i<=4;i++){
-    const w=yMin+(yMax-yMin)*(4-i)/4;
+    const rawW=yMin+(yMax-yMin)*(4-i)/4;
+    const dispW=settings.unit==='kg'?(rawW*0.4536).toFixed(1):Math.round(rawW);
     const y=PAD.top+i/4*ch;
-    ctx.fillText(Math.round(w),PAD.left-4,y+3);
+    ctx.fillText(dispW,PAD.left-4,y+3);
   }
 
   // x axis labels
@@ -901,14 +1081,12 @@ function renderVolume(){
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
+loadSettings();
+applySettings();
 rawText=load()||DEFAULT_LOG;
 document.getElementById('raw-log').value=rawText;
 recompute();
 renderPRs();
-try{if(localStorage.getItem('ironlog_theme')==='light'){
-  document.body.classList.add('light');
-  document.getElementById('theme-btn').textContent='DARK';
-}}catch(e){}
 </script>
 </body>
 </html>
