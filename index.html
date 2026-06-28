@@ -524,12 +524,40 @@ function parseWeight(s){
   return{dual:false,v:isNaN(val)?0:val,assisted};
 }
 
+function normalizeDate(str){
+  str=str.trim();
+  // Already ISO
+  if(/^\d{4}-\d{2}-\d{2}$/.test(str))return str;
+  // Display format: "Jun 27 2026" or "Jun 27"
+  const dispMatch=str.match(/^([A-Za-z]{3})\s+(\d{1,2})(?:\s+(\d{4}))?$/);
+  if(dispMatch){
+    const MONTHS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+    const mi=MONTHS.indexOf(dispMatch[1].toLowerCase());
+    if(mi>=0){
+      const y=dispMatch[3]?parseInt(dispMatch[3]):new Date().getFullYear();
+      const m=String(mi+1).padStart(2,'0');
+      const d=String(parseInt(dispMatch[2])).padStart(2,'0');
+      return `${y}-${m}-${d}`;
+    }
+  }
+  // Bare integer: treat as day of current month
+  const n=parseInt(str);
+  if(!isNaN(n)){
+    const now=new Date();
+    const y=now.getFullYear();
+    const m=String(now.getMonth()+1).padStart(2,'0');
+    const d=String(n).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  return str; // fallback: return unchanged
+}
+
 function parseSessions(text){
   const sessions=[];let date=null,ex=null;
   for(let line of text.split('\n')){
     line=line.trim();if(!line)continue;
     const dm=line.match(/^##\s+(.+)/);
-    if(dm){date=dm[1].trim();ex=null;continue;}
+    if(dm){date=normalizeDate(dm[1].trim());ex=null;continue;}
     if(!date)continue;
     const sm=line.match(/^-\s+(.+)/);
     if(sm&&ex){
@@ -567,13 +595,17 @@ function parseDisplayDate(d){
 }
 
 function compareDates(a,b){
-  const da=parseDisplayDate(a),db=parseDisplayDate(b);
-  if(da!=null&&db!=null)return da-db;
-  const na=parseInt(a),nb=parseInt(b);
-  return (!isNaN(na)&&!isNaN(nb))?na-nb:0;
+  return a<b?-1:a>b?1:0;
 }
 
 function shortDate(d){
+  // d is now an ISO string YYYY-MM-DD
+  if(/^\d{4}-\d{2}-\d{2}$/.test(d)){
+    const [,m,day]=d.split('-');
+    const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${MONTHS[parseInt(m)-1]} ${parseInt(day)}`;
+  }
+  // fallback for old format
   const parts=d.split(/[\s,]+/);
   return (parts.length>=2&&isNaN(parseInt(parts[0])))?`${parts[0]} ${parts[1]}`:d;
 }
@@ -881,10 +913,9 @@ function renderBuilder(){
 function builderSave(){
   const isoVal=document.getElementById('build-date').value;
   if(!isoVal){alert('Enter a date first.');return;}
-  const date=isoToDisplay(isoVal);
   const withSets=builder.exercises.filter(e=>e.sets.length>0);
   if(withSets.length===0){alert('Add at least one set.');return;}
-  let text=`## ${date}`;
+  let text=`## ${isoVal}`;
   for(const ex of withSets){
     text+=`\n${ex.name}`;
     for(const s of ex.sets)text+=`\n- ${s.weight}# ${s.reps}`;
@@ -920,7 +951,7 @@ function renderPRs(){
       <div class="pr-name">${esc(ex)}</div>
       <div class="pr-right">
         <span class="pr-weight">${wStr}<span class="pr-weight-unit"> ${settings.unit}</span></span>
-        <div class="pr-meta">${esc(pr.date)} · ${vol} sets</div>
+        <div class="pr-meta">${esc(isoToDisplay(pr.date))} · ${vol} sets</div>
       </div>
     </div>`;
   }).join('');
@@ -987,7 +1018,7 @@ function renderChart(){
         const wRaw=set.dual?`${fmtWeight(set.v)}/${fmtWeight(set.v2)}`:`${set.assisted?'-':''}${fmtWeight(set.v)}`;
         return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}</span>`;
       }).join('');
-      return `<div class="set-day"><div class="set-date">${esc(s.date)}</div>${chips}</div>`;
+      return `<div class="set-day"><div class="set-date">${esc(isoToDisplay(s.date))}</div>${chips}</div>`;
     }).join('');
   } else {
     setsLabel.style.display='none';setsList.innerHTML='';
