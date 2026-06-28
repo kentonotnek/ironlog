@@ -766,6 +766,16 @@ function switchTab(name,btn){
 function addSession(){
   const input=document.getElementById('log-input').value.trim();
   if(!input)return;
+
+  // Check for duplicate dates
+  const newSessions=parseSessions(input);
+  const existingDates=new Set(sessions.map(s=>s.date));
+  const dupes=newSessions.map(s=>s.date).filter(d=>existingDates.has(d));
+  if(dupes.length>0){
+    const dateList=dupes.map(d=>isoToDisplay(d)).join(', ');
+    if(!confirm(`Session(s) for ${dateList} already exist. Add anyway?`))return;
+  }
+
   rawText=rawText+'\n\n'+input;
   document.getElementById('raw-log').value=rawText;
   document.getElementById('log-input').value='';
@@ -783,8 +793,10 @@ function exportLog(){
   const blob=new Blob([rawText],{type:'text/plain'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download='workout-log.md';a.click();
-  URL.revokeObjectURL(url);
+  a.href=url;
+  a.download='workout-log.md';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),100);
 }
 
 // ── BUILDER ──────────────────────────────────────────────────────────────────
@@ -835,7 +847,9 @@ function builderSetActive(idx){
 
 function builderAddSet(){
   if(builder.activeIdx===-1)return;
-  const w=parseFloat(document.getElementById('build-weight').value);
+  const wInput=parseFloat(document.getElementById('build-weight').value);
+  // Storage is always in lbs; convert from kg if needed
+  const w=settings.unit==='kg'?wInput/0.4536:wInput;
   const r=parseInt(document.getElementById('build-reps').value);
   if(isNaN(w)||isNaN(r)||r<=0)return;
   builder.exercises[builder.activeIdx].sets.push({weight:Math.abs(w),reps:r,assisted:w<0});
@@ -1037,6 +1051,7 @@ function renderChart(){
 }
 
 function drawChart(data){
+  if(data.length<2)return;
   const canvas=document.getElementById('chart');
   const container=document.getElementById('chart-container');
   const W=container.clientWidth||320;const H=180;
