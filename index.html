@@ -520,7 +520,7 @@ function parseWeight(s){
   s=s.trim().replace(/#/g,'');
   if(s.includes('/')){const p=s.split('/').map(Number);return{dual:true,v:p[0],v2:p[1],assisted:false};}
   const assisted=s.startsWith('-');
-  const val=parseFloat(s.replace('-',''));
+  const val=parseFloat(s.replace(/^-/,''));
   return{dual:false,v:isNaN(val)?0:val,assisted};
 }
 
@@ -563,12 +563,21 @@ function parseSessions(text){
     if(sm&&ex){
       const parts=sm[1].trim().split(/\s+/);
       if(parts.length>=2){
-        const w=parseWeight(parts[0]);
-        const reps=parseInt(parts[parts.length-1]);
-        let sess=sessions.find(s=>s.date===date);
-        if(!sess){sess={date,exercises:{}};sessions.push(sess);}
-        if(!sess.exercises[ex])sess.exercises[ex]=[];
-        sess.exercises[ex].push({...w,reps:isNaN(reps)?10:reps});
+        // Find weight token: the one containing '#'
+        const wToken=parts.find(p=>p.includes('#'));
+        // Find reps token: last token that is a plain integer (digits only)
+        let repsToken=null;
+        for(let i=parts.length-1;i>=0;i--){
+          if(/^\d+$/.test(parts[i])){repsToken=parts[i];break;}
+        }
+        if(wToken&&repsToken){
+          const w=parseWeight(wToken);
+          const reps=parseInt(repsToken);
+          let sess=sessions.find(s=>s.date===date);
+          if(!sess){sess={date,exercises:{}};sessions.push(sess);}
+          if(!sess.exercises[ex])sess.exercises[ex]=[];
+          sess.exercises[ex].push({...w,reps:isNaN(reps)?10:reps});
+        }
       }
       continue;
     }
@@ -613,7 +622,9 @@ function shortDate(d){
 function computePRs(sessions){
   const prs={};
   for(const s of sessions)for(const[ex,sets]of Object.entries(s.exercises))
-    for(const set of sets)if(!prs[ex]||set.v>prs[ex].v)prs[ex]={...set,date:s.date};
+    for(const set of sets)
+      if(!set.assisted&&(!prs[ex]||set.v>prs[ex].v))
+        prs[ex]={...set,date:s.date};
   return prs;
 }
 function computeVolume(sessions){
@@ -826,8 +837,8 @@ function builderAddSet(){
   if(builder.activeIdx===-1)return;
   const w=parseFloat(document.getElementById('build-weight').value);
   const r=parseInt(document.getElementById('build-reps').value);
-  if(isNaN(w)||w<=0||isNaN(r)||r<=0)return;
-  builder.exercises[builder.activeIdx].sets.push({weight:w,reps:r});
+  if(isNaN(w)||isNaN(r)||r<=0)return;
+  builder.exercises[builder.activeIdx].sets.push({weight:Math.abs(w),reps:r,assisted:w<0});
   document.getElementById('build-weight').value='';
   document.getElementById('build-reps').value='';
   renderBuilder();
@@ -880,7 +891,7 @@ function renderBuilder(){
     const isEditing=exIdx===builder.editingIdx;
     const chips=ex.sets.map((s,sIdx)=>
       `<span class="build-set-chip" title="tap to remove"
-             onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.weight} ${unitLbl} × ${s.reps}</span>`
+             onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.assisted?'-':''}${s.weight} ${unitLbl} × ${s.reps}</span>`
     ).join('');
     const nameEl=isEditing
       ?`<input id="build-ex-edit" class="build-ex-edit" value="${esc(ex.name)}"
@@ -889,7 +900,7 @@ function renderBuilder(){
       :`<span class="build-ex-name" onclick="builderStartEditEx(${exIdx})" title="tap to rename" style="cursor:text">${esc(ex.name)}</span>`;
     const footer=isActive
       ?`<div class="build-set-input-row">
-          <input type="number" id="build-weight" class="build-input-sm" placeholder="${unitLbl}" min="0" step="2.5"
+          <input type="number" id="build-weight" class="build-input-sm" placeholder="${unitLbl}" step="2.5"
                  onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
           <span class="build-unit">${unitLbl}</span>
           <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
@@ -918,7 +929,7 @@ function builderSave(){
   let text=`## ${isoVal}`;
   for(const ex of withSets){
     text+=`\n${ex.name}`;
-    for(const s of ex.sets)text+=`\n- ${s.weight}# ${s.reps}`;
+    for(const s of ex.sets)text+=`\n- ${s.assisted?'-':''}${s.weight}# ${s.reps}`;
   }
   rawText=rawText+'\n\n'+text;
   document.getElementById('raw-log').value=rawText;
