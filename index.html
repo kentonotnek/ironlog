@@ -1193,16 +1193,16 @@ body.light #build-date {
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="save-indicator">SAVED ✓</span>
-    <button id="export-btn" aria-label="Export workout log" onclick="exportLog()">EXPORT</button>
-    <button id="settings-btn" aria-label="Open settings" onclick="openSettings()">⚙ SETTINGS</button>
+    <button type="button" id="export-btn" aria-label="Export workout log" onclick="exportLog()">EXPORT</button>
+    <button type="button" id="settings-btn" aria-label="Open settings" onclick="openSettings()">⚙ SETTINGS</button>
   </div>
 </div>
 
 <div id="tabs" role="tablist">
-  <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-log" onclick="switchTab('log',this)">⌨ Log</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-prs" onclick="switchTab('prs',this)">🏆 PRs</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-progress" onclick="switchTab('progress',this)">📈 Progress</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-volume" onclick="switchTab('volume',this)">🔥 Volume</button>
+  <button type="button" class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-log" onclick="switchTab('log',this)">⌨ Log</button>
+  <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-prs" onclick="switchTab('prs',this)">🏆 PRs</button>
+  <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-progress" onclick="switchTab('progress',this)">📈 Progress</button>
+  <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-volume" onclick="switchTab('volume',this)">🔥 Volume</button>
 </div>
 
 <div id="content">
@@ -1210,8 +1210,8 @@ body.light #build-date {
   <!-- LOG -->
   <div id="panel-log" class="panel active" role="tabpanel">
     <div id="log-mode-toggle">
-      <button class="mode-btn active" id="mode-paste-btn" onclick="setLogMode('paste')">PASTE</button>
-      <button class="mode-btn" id="mode-build-btn" onclick="setLogMode('build')">BUILD</button>
+      <button type="button" class="mode-btn active" id="mode-paste-btn" onclick="setLogMode('paste')">PASTE</button>
+      <button type="button" class="mode-btn" id="mode-build-btn" onclick="setLogMode('build')">BUILD</button>
     </div>
 
     <!-- PASTE mode -->
@@ -1221,7 +1221,7 @@ body.light #build-date {
       </p>
       <textarea id="log-input" placeholder="## 25&#10;Dips&#10;- 50# 10&#10;- 55# 8&#10;Lat Pulldown&#10;- 140# 10&#10;- 150# 10"></textarea>
       <div style="display:flex;align-items:center;margin-top:10px">
-        <button id="add-btn" onclick="addSession()">ADD SESSION</button>
+        <button type="button" id="add-btn" onclick="addSession()">ADD SESSION</button>
         <span id="add-msg">✓ Session saved</span>
       </div>
       <div id="full-log-label">Full log — edit directly if needed</div>
@@ -1240,13 +1240,13 @@ body.light #build-date {
           <input type="text" id="build-ex-input" class="build-input" placeholder="e.g. Dips" list="build-ex-suggestions"
                  onkeydown="if(event.key==='Enter')builderAddExercise()" />
           <datalist id="build-ex-suggestions"></datalist>
-          <button class="build-add-btn" onclick="builderAddExercise()">+ ADD</button>
+          <button type="button" class="build-add-btn" onclick="builderAddExercise()">+ ADD</button>
         </div>
       </div>
       <div id="build-preview"></div>
       <div id="build-actions" style="display:none;margin-top:8px">
-        <button id="build-save-btn" onclick="builderSave()">SAVE SESSION</button>
-        <button id="build-clear-btn" onclick="builderClear()">CLEAR</button>
+        <button type="button" id="build-save-btn" onclick="builderSave()">SAVE SESSION</button>
+        <button type="button" id="build-clear-btn" onclick="builderClear()">CLEAR</button>
       </div>
       <div id="build-save-msg">✓ Session saved</div>
     </div>
@@ -1287,48 +1287,48 @@ body.light #build-date {
 <div id="settings-drawer">
   <div id="settings-header">
     <span id="settings-title">SETTINGS</span>
-    <button id="settings-close" onclick="closeSettings()">×</button>
+    <button type="button" id="settings-close" onclick="closeSettings()">×</button>
   </div>
   <div class="settings-section">
     <div class="settings-label">THEME</div>
     <div class="settings-chips">
-      <button class="settings-chip" id="chip-dark" onclick="setTheme('dark')">DARK</button>
-      <button class="settings-chip" id="chip-light" onclick="setTheme('light')">LIGHT</button>
+      <button type="button" class="settings-chip" id="chip-dark" onclick="setTheme('dark')">DARK</button>
+      <button type="button" class="settings-chip" id="chip-light" onclick="setTheme('light')">LIGHT</button>
     </div>
   </div>
   <div class="settings-section">
     <div class="settings-label">ACCENT COLOR</div>
     <div class="settings-chips">
-      <button class="accent-swatch" id="swatch-yellow" style="background:#E8FF47" onclick="setAccent('yellow','#E8FF47','#d4eb3f')" title="Yellow"></button>
-      <button class="accent-swatch" id="swatch-blue" style="background:#47c8ff" onclick="setAccent('blue','#47c8ff','#30b0e8')" title="Blue"></button>
-      <button class="accent-swatch" id="swatch-orange" style="background:#ff8c47" onclick="setAccent('orange','#ff8c47','#e87030')" title="Orange"></button>
-      <button class="accent-swatch" id="swatch-green" style="background:#6dff8c" onclick="setAccent('green','#6dff8c','#50e070')" title="Green"></button>
-      <button class="accent-swatch" id="swatch-red" style="background:#ff5c6e" onclick="setAccent('red','#ff5c6e','#e84455')" title="Red"></button>
-      <button class="accent-swatch" id="swatch-purple" style="background:#c47aff" onclick="setAccent('purple','#c47aff','#aa60e8')" title="Purple"></button>
+      <button type="button" class="accent-swatch" id="swatch-yellow" style="background:#E8FF47" onclick="setAccent('yellow','#E8FF47','#d4eb3f')" title="Yellow"></button>
+      <button type="button" class="accent-swatch" id="swatch-blue" style="background:#47c8ff" onclick="setAccent('blue','#47c8ff','#30b0e8')" title="Blue"></button>
+      <button type="button" class="accent-swatch" id="swatch-orange" style="background:#ff8c47" onclick="setAccent('orange','#ff8c47','#e87030')" title="Orange"></button>
+      <button type="button" class="accent-swatch" id="swatch-green" style="background:#6dff8c" onclick="setAccent('green','#6dff8c','#50e070')" title="Green"></button>
+      <button type="button" class="accent-swatch" id="swatch-red" style="background:#ff5c6e" onclick="setAccent('red','#ff5c6e','#e84455')" title="Red"></button>
+      <button type="button" class="accent-swatch" id="swatch-purple" style="background:#c47aff" onclick="setAccent('purple','#c47aff','#aa60e8')" title="Purple"></button>
     </div>
   </div>
   <div class="settings-section">
     <div class="settings-label">FONT</div>
     <div class="settings-chips">
-      <button class="settings-chip" id="chip-font-mono" onclick="setFont('mono')" style="font-family:'Courier New',monospace">MONO</button>
-      <button class="settings-chip" id="chip-font-sans" onclick="setFont('sans')" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">SANS</button>
-      <button class="settings-chip" id="chip-font-rounded" onclick="setFont('rounded')" style="font-family:ui-rounded,'Varela Round',system-ui,sans-serif">ROUND</button>
-      <button class="settings-chip" id="chip-font-serif" onclick="setFont('serif')" style="font-family:Georgia,'Palatino Linotype',serif">SERIF</button>
+      <button type="button" class="settings-chip" id="chip-font-mono" onclick="setFont('mono')" style="font-family:'Courier New',monospace">MONO</button>
+      <button type="button" class="settings-chip" id="chip-font-sans" onclick="setFont('sans')" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">SANS</button>
+      <button type="button" class="settings-chip" id="chip-font-rounded" onclick="setFont('rounded')" style="font-family:ui-rounded,'Varela Round',system-ui,sans-serif">ROUND</button>
+      <button type="button" class="settings-chip" id="chip-font-serif" onclick="setFont('serif')" style="font-family:Georgia,'Palatino Linotype',serif">SERIF</button>
     </div>
   </div>
   <div class="settings-section">
     <div class="settings-label">TEXT SIZE</div>
     <div class="settings-chips">
-      <button class="settings-chip" id="chip-size-sm" onclick="setSize('sm')">SMALL</button>
-      <button class="settings-chip" id="chip-size-md" onclick="setSize('md')">MEDIUM</button>
-      <button class="settings-chip" id="chip-size-lg" onclick="setSize('lg')">LARGE</button>
+      <button type="button" class="settings-chip" id="chip-size-sm" onclick="setSize('sm')">SMALL</button>
+      <button type="button" class="settings-chip" id="chip-size-md" onclick="setSize('md')">MEDIUM</button>
+      <button type="button" class="settings-chip" id="chip-size-lg" onclick="setSize('lg')">LARGE</button>
     </div>
   </div>
   <div class="settings-section">
     <div class="settings-label">WEIGHT UNITS</div>
     <div class="settings-chips">
-      <button class="settings-chip" id="chip-unit-lbs" onclick="setUnit('lbs')">LBS</button>
-      <button class="settings-chip" id="chip-unit-kg" onclick="setUnit('kg')">KG</button>
+      <button type="button" class="settings-chip" id="chip-unit-lbs" onclick="setUnit('lbs')">LBS</button>
+      <button type="button" class="settings-chip" id="chip-unit-kg" onclick="setUnit('kg')">KG</button>
     </div>
   </div>
 </div>
@@ -1536,7 +1536,7 @@ function normalizeDate(str) {
   }
   // Bare integer: treat as day of current month
   const n = parseInt(str);
-  if (!isNaN(n)) {
+  if (!isNaN(n) && n >= 1 && n <= 31) {
     const now = new Date();
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -1985,13 +1985,13 @@ function renderBuilder() {
           <span class="build-unit">${unitLbl}</span>
           <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
                  onkeydown="if(event.key==='Enter')builderAddSet()" />
-          <button class="build-add-btn" onclick="builderAddSet()">+ SET</button>
+          <button type="button" class="build-add-btn" onclick="builderAddSet()">+ SET</button>
         </div>`
-      : `<button class="build-switch-btn" onclick="builderSetActive(${exIdx})">+ ADD SETS</button>`;
+      : `<button type="button" class="build-switch-btn" onclick="builderSetActive(${exIdx})">+ ADD SETS</button>`;
     return `<div class="build-ex-block${isActive ? ' active' : ''}">
       <div class="build-ex-header">
         ${nameEl}
-        <button class="build-ex-remove" onclick="builderRemoveEx(${exIdx})" title="remove">×</button>
+        <button type="button" class="build-ex-remove" onclick="builderRemoveEx(${exIdx})" title="remove">×</button>
       </div>
       <div class="build-set-chips">${chips}</div>
       ${footer}
