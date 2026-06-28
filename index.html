@@ -138,9 +138,9 @@ body.light .build-ex-edit{background:#fff;border-color:#999;color:#1a1a1a}
 .accent-swatch{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform 0.12s,box-shadow 0.12s;flex-shrink:0}
 .accent-swatch.active{transform:scale(1.2);box-shadow:0 0 0 2px #0f0f0f,0 0 0 4px #ddd}
 
-/* SIZE SCALING — zoom scales the whole tab bar + content uniformly */
-body.size-sm #tabs,body.size-sm #content{zoom:0.82}
-body.size-lg #tabs,body.size-lg #content{zoom:1.22}
+/* SIZE SCALING — transform scales the whole tab bar + content uniformly (cross-browser, works in Firefox) */
+body.size-sm #tabs, body.size-sm #content { transform: scale(0.82); transform-origin: top left; width: calc(100% / 0.82); }
+body.size-lg #tabs, body.size-lg #content { transform: scale(1.22); transform-origin: top left; width: calc(100% / 1.22); }
 
 /* ── LIGHT MODE ─────────────────────────────────────────────────────────────── */
 body.light{background:#f4f4f4;color:#111}
@@ -905,7 +905,7 @@ function renderBuilder(){
     const isEditing=exIdx===builder.editingIdx;
     const chips=ex.sets.map((s,sIdx)=>
       `<span class="build-set-chip" title="tap to remove"
-             onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.assisted?'-':''}${s.weight} ${unitLbl} × ${s.reps}</span>`
+             onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.assisted?'-':''}${fmtWeight(s.weight)} ${unitLbl} × ${s.reps}</span>`
     ).join('');
     const nameEl=isEditing
       ?`<input id="build-ex-edit" class="build-ex-edit" value="${esc(ex.name)}"
