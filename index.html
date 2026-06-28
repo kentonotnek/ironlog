@@ -137,19 +137,9 @@ body.light .build-ex-edit{background:#fff;border-color:#999;color:#1a1a1a}
 .accent-swatch{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform 0.12s,box-shadow 0.12s;flex-shrink:0}
 .accent-swatch.active{transform:scale(1.2);box-shadow:0 0 0 2px #0f0f0f,0 0 0 4px #ddd}
 
-/* SIZE SCALING */
-body.size-sm .pr-name{font-size:11px}
-body.size-sm .pr-weight{font-size:12px}
-body.size-sm .pr-meta,body.size-sm .section-label,body.size-sm .vol-count,body.size-sm .set-date{font-size:9px}
-body.size-sm .set-chip,body.size-sm .ex-btn,body.size-sm .hint{font-size:10px}
-body.size-sm .build-ex-name,body.size-sm .vol-name{font-size:11px}
-body.size-sm .build-input,body.size-sm .build-input-sm,body.size-sm #log-input,body.size-sm #raw-log{font-size:11px}
-body.size-lg .pr-name{font-size:14px}
-body.size-lg .pr-weight{font-size:17px}
-body.size-lg .pr-meta,body.size-lg .section-label,body.size-lg .vol-count,body.size-lg .set-date{font-size:12px}
-body.size-lg .set-chip,body.size-lg .ex-btn,body.size-lg .hint{font-size:13px}
-body.size-lg .build-ex-name,body.size-lg .vol-name{font-size:15px}
-body.size-lg .build-input,body.size-lg .build-input-sm,body.size-lg #log-input,body.size-lg #raw-log{font-size:15px}
+/* SIZE SCALING — zoom scales the whole tab bar + content uniformly */
+body.size-sm #tabs,body.size-sm #content{zoom:0.82}
+body.size-lg #tabs,body.size-lg #content{zoom:1.22}
 
 /* ── LIGHT MODE ─────────────────────────────────────────────────────────────── */
 body.light{background:#f4f4f4;color:#111}
@@ -355,6 +345,8 @@ body.light #build-date{color-scheme:light}
     <div class="settings-chips">
       <button class="settings-chip" id="chip-font-mono" onclick="setFont('mono')" style="font-family:'Courier New',monospace">MONO</button>
       <button class="settings-chip" id="chip-font-sans" onclick="setFont('sans')" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">SANS</button>
+      <button class="settings-chip" id="chip-font-rounded" onclick="setFont('rounded')" style="font-family:ui-rounded,'Varela Round',system-ui,sans-serif">ROUND</button>
+      <button class="settings-chip" id="chip-font-serif" onclick="setFont('serif')" style="font-family:Georgia,'Palatino Linotype',serif">SERIF</button>
     </div>
   </div>
   <div class="settings-section">
@@ -632,7 +624,8 @@ function applySettings(){
     root.style.removeProperty('--accent-faint');
   }
   // font
-  root.style.setProperty('--font',settings.font==='sans'?"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif":"'Courier New',monospace");
+  const FONTS={mono:"'Courier New',monospace",sans:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif",rounded:"ui-rounded,'Varela Round',system-ui,sans-serif",serif:"Georgia,'Palatino Linotype',serif"};
+  root.style.setProperty('--font',FONTS[settings.font]||FONTS.mono);
   // size
   b.classList.remove('size-sm','size-lg');
   if(settings.size!=='md')b.classList.add('size-'+settings.size);
@@ -652,6 +645,8 @@ function syncSettingsUI(){
   });
   chip('chip-font-mono',settings.font==='mono');
   chip('chip-font-sans',settings.font==='sans');
+  chip('chip-font-rounded',settings.font==='rounded');
+  chip('chip-font-serif',settings.font==='serif');
   chip('chip-size-sm',settings.size==='sm');
   chip('chip-size-md',settings.size==='md');
   chip('chip-size-lg',settings.size==='lg');
