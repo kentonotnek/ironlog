@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' blob: data:">
 <title>Iron Log</title>
 <style>
 :root{--accent:#E8FF47;--accent-press:#d4eb3f;--accent-dim:rgba(232,255,71,0.4);--accent-faint:rgba(232,255,71,0.06);--font:'Courier New',monospace}
@@ -367,6 +368,16 @@ body.light #build-date{color-scheme:light}
 </div>
 
 <script>
+// ── HTML ENCODE HELPER ────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── STORAGE ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ironlog_v1';
 const SETTINGS_KEY = 'ironlog_settings';
@@ -752,7 +763,7 @@ function setLogMode(mode){
 function refreshBuilderSuggestions(){
   const names=new Set([...Object.values(ALIASES),...Object.keys(prs)]);
   document.getElementById('build-ex-suggestions').innerHTML=
-    [...names].sort().map(n=>`<option value="${n}">`).join('');
+    [...names].sort().map(n=>`<option value="${esc(n)}">`).join('');
 }
 
 function focusWeight(){
@@ -840,10 +851,10 @@ function renderBuilder(){
              onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.weight} ${unitLbl} × ${s.reps}</span>`
     ).join('');
     const nameEl=isEditing
-      ?`<input id="build-ex-edit" class="build-ex-edit" value="${ex.name.replace(/"/g,'&quot;')}"
+      ?`<input id="build-ex-edit" class="build-ex-edit" value="${esc(ex.name)}"
            onkeydown="if(event.key==='Enter'){event.preventDefault();builderSaveExName(${exIdx},true)}else if(event.key==='Escape')builderSaveExName(${exIdx},false)"
            onblur="builderSaveExName(${exIdx},true)" />`
-      :`<span class="build-ex-name" onclick="builderStartEditEx(${exIdx})" title="tap to rename" style="cursor:text">${ex.name}</span>`;
+      :`<span class="build-ex-name" onclick="builderStartEditEx(${exIdx})" title="tap to rename" style="cursor:text">${esc(ex.name)}</span>`;
     const footer=isActive
       ?`<div class="build-set-input-row">
           <input type="number" id="build-weight" class="build-input-sm" placeholder="${unitLbl}" min="0" step="2.5"
@@ -904,15 +915,18 @@ function renderPRs(){
     const vol=volume[ex]||0;
     const pct=(vol/maxVol*100).toFixed(1);
     const wStr=pr.dual?`${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}`:`${fmtWeight(pr.v)}`;
-    return `<div class="pr-row" onclick="goProgress('${ex}')">
+    return `<div class="pr-row" data-ex="${esc(ex)}">
       <div class="pr-bar" style="width:${pct}%"></div>
-      <div class="pr-name">${ex}</div>
+      <div class="pr-name">${esc(ex)}</div>
       <div class="pr-right">
         <span class="pr-weight">${wStr}<span class="pr-weight-unit"> ${settings.unit}</span></span>
-        <div class="pr-meta">${pr.date} · ${vol} sets</div>
+        <div class="pr-meta">${esc(pr.date)} · ${vol} sets</div>
       </div>
     </div>`;
   }).join('');
+  document.querySelectorAll('#pr-list .pr-row').forEach(row => {
+    row.addEventListener('click', () => goProgress(row.dataset.ex));
+  });
 }
 
 // ── PROGRESS TAB ──────────────────────────────────────────────────────────────
@@ -929,7 +943,10 @@ function goProgress(ex){
 function renderProgress(){
   const exs=Object.keys(prs).sort();
   const btns=document.getElementById('ex-buttons');
-  btns.innerHTML=exs.map(ex=>`<button class="ex-btn${ex===selectedEx?' active':''}" onclick="selectEx('${ex}')">${ex}</button>`).join('');
+  btns.innerHTML=exs.map(ex=>`<button class="ex-btn${ex===selectedEx?' active':''}" data-ex="${esc(ex)}">${esc(ex)}</button>`).join('');
+  document.querySelectorAll('#ex-buttons .ex-btn').forEach(btn => {
+    btn.addEventListener('click', () => selectEx(btn.dataset.ex));
+  });
   renderChart();
 }
 
@@ -970,7 +987,7 @@ function renderChart(){
         const wRaw=set.dual?`${fmtWeight(set.v)}/${fmtWeight(set.v2)}`:`${set.assisted?'-':''}${fmtWeight(set.v)}`;
         return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}</span>`;
       }).join('');
-      return `<div class="set-day"><div class="set-date">${s.date}</div>${chips}</div>`;
+      return `<div class="set-day"><div class="set-date">${esc(s.date)}</div>${chips}</div>`;
     }).join('');
   } else {
     setsLabel.style.display='none';setsList.innerHTML='';
@@ -1060,18 +1077,21 @@ function renderVolume(){
   document.getElementById('vol-list').innerHTML=sorted.map(([ex,count])=>{
     const pct=(count/maxVol*100).toFixed(1);
     const low=count/maxVol<0.35;
-    return `<div class="vol-row" onclick="goProgress('${ex}')">
+    return `<div class="vol-row" data-ex="${esc(ex)}">
       <div class="vol-row-header">
-        <span class="vol-name${low?' low':''}">${ex}</span>
+        <span class="vol-name${low?' low':''}">${esc(ex)}</span>
         <span class="vol-count${low?' low':''}">${count} sets${low?' ⚠':''}</span>
       </div>
       <div class="vol-track"><div class="vol-fill${low?' low':''}" style="width:${pct}%"></div></div>
     </div>`;
   }).join('');
+  document.querySelectorAll('#vol-list .vol-row').forEach(row => {
+    row.addEventListener('click', () => goProgress(row.dataset.ex));
+  });
 
   const low=sorted.filter(([,c])=>c/maxVol<0.35).sort((a,b)=>a[1]-b[1]);
   document.getElementById('attention-list').innerHTML=low.map(([ex,count])=>
-    `<div class="attention-item">→ ${ex} <span>(${count} sets)</span></div>`
+    `<div class="attention-item">→ ${esc(ex)} <span>(${count} sets)</span></div>`
   ).join('');
 }
 
