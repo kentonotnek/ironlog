@@ -1905,125 +1905,282 @@ function focusWeight() {
   });
 }
 
+// ── BUILDER DOM HELPERS ───────────────────────────────────────────────────────
+function makeActiveFooter() {
+  const div = document.createElement('div');
+  div.className = 'build-set-input-row build-ex-footer';
+  div.innerHTML = `
+    <input type="number" id="build-weight" class="build-input-sm"
+           placeholder="${settings.unit}" step="2.5"
+           onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
+    <span class="build-unit">${settings.unit}</span>
+    <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
+           onkeydown="if(event.key==='Enter')builderAddSet()" />
+    <button type="button" class="build-add-btn" onclick="builderAddSet()">+ SET</button>`;
+  return div;
+}
+
+function makeInactiveFooter(exIdx) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'build-switch-btn build-ex-footer';
+  btn.textContent = '+ ADD SETS';
+  btn.onclick = () => builderSetActive(exIdx);
+  return btn;
+}
+
+function makeChipEl(exIdx, setIdx, s) {
+  const chip = document.createElement('span');
+  chip.className = 'build-set-chip';
+  chip.title = 'tap to remove';
+  chip.dataset.setIdx = setIdx;
+  chip.textContent = `${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${settings.unit} × ${s.reps}`;
+  chip.addEventListener('click', e => {
+    e.stopPropagation();
+    builderRemoveSet(exIdx, parseInt(chip.dataset.setIdx));
+  });
+  return chip;
+}
+
+function makeExBlock(exIdx, name, sets, isActive) {
+  const div = document.createElement('div');
+  div.className = 'build-ex-block' + (isActive ? ' active' : '');
+  div.dataset.exIdx = exIdx;
+
+  const header = document.createElement('div');
+  header.className = 'build-ex-header';
+
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'build-ex-name';
+  nameSpan.style.cursor = 'text';
+  nameSpan.title = 'tap to rename';
+  nameSpan.textContent = name;
+  nameSpan.onclick = () => builderStartEditEx(exIdx);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'build-ex-remove';
+  removeBtn.title = 'remove';
+  removeBtn.textContent = '×';
+  removeBtn.onclick = () => builderRemoveEx(exIdx);
+
+  header.appendChild(nameSpan);
+  header.appendChild(removeBtn);
+
+  const chipsEl = document.createElement('div');
+  chipsEl.className = 'build-set-chips';
+  sets.forEach((s, si) => chipsEl.appendChild(makeChipEl(exIdx, si, s)));
+
+  div.appendChild(header);
+  div.appendChild(chipsEl);
+  div.appendChild(isActive ? makeActiveFooter() : makeInactiveFooter(exIdx));
+  return div;
+}
+
 function builderAddExercise() {
   const inp = document.getElementById('build-ex-input');
   const name = canon(inp.value.trim());
   if (!name) return;
+
   let idx = state.builder.exercises.findIndex(e => e.name === name);
-  if (idx === -1) { state.builder.exercises.push({ name, sets: [] }); idx = state.builder.exercises.length - 1; }
+  const isNew = idx === -1;
+  if (isNew) {
+    state.builder.exercises.push({ name, sets: [] });
+    idx = state.builder.exercises.length - 1;
+  }
+
+  const prevActive = state.builder.activeIdx;
   state.builder.activeIdx = idx;
   state.builder.editingIdx = -1;
   inp.value = '';
-  renderBuilder();
+
+  if (isNew) {
+    // Deactivate the previously-active block's footer
+    if (prevActive !== -1) {
+      const prevBlock = document.querySelector(`[data-ex-idx="${prevActive}"]`);
+      if (prevBlock) {
+        prevBlock.classList.remove('active');
+        prevBlock.querySelector('.build-ex-footer').replaceWith(makeInactiveFooter(prevActive));
+      }
+    }
+    // Append the new block
+    const block = makeExBlock(idx, name, [], true);
+    document.getElementById('build-preview').appendChild(block);
+    document.getElementById('build-actions').style.display = 'block';
+  } else {
+    // Exercise already exists — just activate it
+    builderSetActive(idx);
+    return;
+  }
+
   focusWeight();
 }
 
 function builderSetActive(idx) {
+  const prev = state.builder.activeIdx;
   state.builder.activeIdx = idx;
   state.builder.editingIdx = -1;
-  renderBuilder();
+
+  if (prev !== -1 && prev !== idx) {
+    const prevBlock = document.querySelector(`[data-ex-idx="${prev}"]`);
+    if (prevBlock) {
+      prevBlock.classList.remove('active');
+      prevBlock.querySelector('.build-ex-footer').replaceWith(makeInactiveFooter(prev));
+    }
+  }
+
+  const newBlock = document.querySelector(`[data-ex-idx="${idx}"]`);
+  if (newBlock) {
+    newBlock.classList.add('active');
+    const curFooter = newBlock.querySelector('.build-ex-footer');
+    if (curFooter && !curFooter.classList.contains('build-set-input-row')) {
+      curFooter.replaceWith(makeActiveFooter());
+    }
+  }
+
   focusWeight();
 }
 
 function builderAddSet() {
   if (state.builder.activeIdx === -1) return;
   const wInput = parseFloat(document.getElementById('build-weight').value);
-  // Storage is always in lbs; convert from kg if needed
   const w = settings.unit === 'kg' ? wInput / 0.4536 : wInput;
   const r = parseInt(document.getElementById('build-reps').value);
   if (isNaN(w) || isNaN(r) || r <= 0) return;
-  state.builder.exercises[state.builder.activeIdx].sets.push({ weight: Math.abs(w), reps: r, assisted: w < 0 });
+
+  const exIdx = state.builder.activeIdx;
+  const setData = { weight: Math.abs(w), reps: r, assisted: w < 0 };
+  state.builder.exercises[exIdx].sets.push(setData);
+  const setIdx = state.builder.exercises[exIdx].sets.length - 1;
+
+  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
+  block.querySelector('.build-set-chips').appendChild(makeChipEl(exIdx, setIdx, setData));
+
   document.getElementById('build-weight').value = '';
   document.getElementById('build-reps').value = '';
-  renderBuilder();
   focusWeight();
 }
 
 function builderRemoveSet(exIdx, setIdx) {
   state.builder.exercises[exIdx].sets.splice(setIdx, 1);
-  renderBuilder();
-  focusWeight();
+
+  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
+  const chipsEl = block.querySelector('.build-set-chips');
+
+  // Rebuild chips for this exercise only (indices shifted)
+  chipsEl.innerHTML = '';
+  state.builder.exercises[exIdx].sets.forEach((s, si) =>
+    chipsEl.appendChild(makeChipEl(exIdx, si, s))
+  );
+
+  if (exIdx === state.builder.activeIdx) focusWeight();
 }
 
 function builderRemoveEx(idx) {
   state.builder.exercises.splice(idx, 1);
+
+  // Recalculate active/editing indices
   if (state.builder.activeIdx === idx)
-    state.builder.activeIdx = state.builder.exercises.length > 0 ? Math.min(idx, state.builder.exercises.length - 1) : -1;
+    state.builder.activeIdx = state.builder.exercises.length > 0
+      ? Math.min(idx, state.builder.exercises.length - 1) : -1;
   else if (state.builder.activeIdx > idx)
     state.builder.activeIdx--;
   if (state.builder.editingIdx === idx) state.builder.editingIdx = -1;
   else if (state.builder.editingIdx > idx) state.builder.editingIdx--;
-  renderBuilder();
+
+  // Remove the block from DOM
+  const block = document.querySelector(`[data-ex-idx="${idx}"]`);
+  if (block) block.remove();
+
+  // Re-index remaining blocks
+  const preview = document.getElementById('build-preview');
+  preview.querySelectorAll('.build-ex-block').forEach((b, i) => {
+    b.dataset.exIdx = i;
+    b.classList.toggle('active', i === state.builder.activeIdx);
+    const removeBtn = b.querySelector('.build-ex-remove');
+    if (removeBtn) removeBtn.onclick = () => builderRemoveEx(i);
+    const switchBtn = b.querySelector('.build-switch-btn');
+    if (switchBtn) switchBtn.onclick = () => builderSetActive(i);
+    const nameSpan = b.querySelector('.build-ex-name');
+    if (nameSpan) nameSpan.onclick = () => builderStartEditEx(i);
+    b.querySelectorAll('.build-set-chip').forEach((chip, si) => {
+      chip.dataset.setIdx = si;
+      chip.onclick = e => { e.stopPropagation(); builderRemoveSet(i, si); };
+    });
+    // If this is now the active block, ensure it has the active footer
+    if (i === state.builder.activeIdx) {
+      const footer = b.querySelector('.build-ex-footer');
+      if (footer && !footer.classList.contains('build-set-input-row')) {
+        footer.replaceWith(makeActiveFooter());
+      }
+    }
+  });
+
+  if (state.builder.exercises.length === 0) {
+    document.getElementById('build-actions').style.display = 'none';
+  }
 }
 
 function builderStartEditEx(idx) {
   state.builder.editingIdx = idx;
-  renderBuilder();
-  requestAnimationFrame(() => {
-    const i = document.getElementById('build-ex-edit');
-    if (i) { i.focus(); i.select(); }
-  });
+  const block = document.querySelector(`[data-ex-idx="${idx}"]`);
+  const header = block.querySelector('.build-ex-header');
+  const nameSpan = header.querySelector('.build-ex-name');
+
+  const editInput = document.createElement('input');
+  editInput.id = 'build-ex-edit';
+  editInput.className = 'build-ex-edit';
+  editInput.value = state.builder.exercises[idx].name;
+  editInput.onkeydown = e => {
+    if (e.key === 'Enter') { e.preventDefault(); builderSaveExName(idx, true); }
+    else if (e.key === 'Escape') builderSaveExName(idx, false);
+  };
+  editInput.onblur = () => builderSaveExName(idx, true);
+  nameSpan.replaceWith(editInput);
+  requestAnimationFrame(() => { editInput.focus(); editInput.select(); });
 }
 
 function builderSaveExName(idx, commit) {
   if (state.builder.editingIdx === -1) return;
   const inp = document.getElementById('build-ex-edit');
-  if (commit && inp) {
+  if (!inp) return; // guard against double-call (blur fires after Enter)
+  if (commit) {
     const name = canon(inp.value.trim());
     if (name) state.builder.exercises[idx].name = name;
   }
   state.builder.editingIdx = -1;
-  renderBuilder();
-  focusWeight();
+
+  const block = document.querySelector(`[data-ex-idx="${idx}"]`);
+  const header = block.querySelector('.build-ex-header');
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'build-ex-name';
+  nameSpan.style.cursor = 'text';
+  nameSpan.title = 'tap to rename';
+  nameSpan.textContent = state.builder.exercises[idx].name;
+  nameSpan.onclick = () => builderStartEditEx(idx);
+  inp.replaceWith(nameSpan);
+
+  if (state.builder.activeIdx !== -1) focusWeight();
 }
 
-function renderBuilder() {
+function buildPreviewFromScratch() {
   const preview = document.getElementById('build-preview');
   const actions = document.getElementById('build-actions');
-  const sy = window.scrollY;
-  // blur first so the browser doesn't scroll-to-destroyed-input on innerHTML swap
-  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
-  window.scrollTo(0, sy);
   if (state.builder.exercises.length === 0) {
     preview.innerHTML = '';
     actions.style.display = 'none';
-    window.scrollTo(0, sy);
     return;
   }
-  const unitLbl = settings.unit;
-  preview.innerHTML = state.builder.exercises.map((ex, exIdx) => {
-    const isActive = exIdx === state.builder.activeIdx;
-    const isEditing = exIdx === state.builder.editingIdx;
-    const chips = ex.sets.map((s, sIdx) =>
-      `<span class="build-set-chip" title="tap to remove"
-             onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${unitLbl} × ${s.reps}</span>`
-    ).join('');
-    const nameEl = isEditing
-      ? `<input id="build-ex-edit" class="build-ex-edit" value="${esc(ex.name)}"
-           onkeydown="if(event.key==='Enter'){event.preventDefault();builderSaveExName(${exIdx},true)}else if(event.key==='Escape')builderSaveExName(${exIdx},false)"
-           onblur="builderSaveExName(${exIdx},true)" />`
-      : `<span class="build-ex-name" onclick="builderStartEditEx(${exIdx})" title="tap to rename" style="cursor:text">${esc(ex.name)}</span>`;
-    const footer = isActive
-      ? `<div class="build-set-input-row">
-          <input type="number" id="build-weight" class="build-input-sm" placeholder="${unitLbl}" step="2.5"
-                 onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
-          <span class="build-unit">${unitLbl}</span>
-          <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
-                 onkeydown="if(event.key==='Enter')builderAddSet()" />
-          <button type="button" class="build-add-btn" onclick="builderAddSet()">+ SET</button>
-        </div>`
-      : `<button type="button" class="build-switch-btn" onclick="builderSetActive(${exIdx})">+ ADD SETS</button>`;
-    return `<div class="build-ex-block${isActive ? ' active' : ''}">
-      <div class="build-ex-header">
-        ${nameEl}
-        <button type="button" class="build-ex-remove" onclick="builderRemoveEx(${exIdx})" title="remove">×</button>
-      </div>
-      <div class="build-set-chips">${chips}</div>
-      ${footer}
-    </div>`;
-  }).join('');
+  preview.innerHTML = '';
+  state.builder.exercises.forEach((ex, exIdx) => {
+    preview.appendChild(makeExBlock(
+      exIdx,
+      ex.name,
+      ex.sets,
+      exIdx === state.builder.activeIdx
+    ));
+  });
   actions.style.display = 'block';
-  window.scrollTo(0, sy);
 }
 
 function builderSave() {
@@ -2039,7 +2196,7 @@ function builderSave() {
   setRawText(state.rawText + '\n\n' + text);
   state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = new Date().toISOString().split('T')[0];
-  renderBuilder();
+  buildPreviewFromScratch();
   const msg = document.getElementById('build-save-msg');
   msg.classList.add('show');
   setTimeout(() => msg.classList.remove('show'), 2500);
@@ -2048,7 +2205,7 @@ function builderSave() {
 function builderClear() {
   state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = '';
-  renderBuilder();
+  buildPreviewFromScratch();
 }
 
 // ── PRs TAB ───────────────────────────────────────────────────────────────────
@@ -2089,9 +2246,6 @@ function renderPRs() {
       </div>
     </div>`;
   }).join('');
-  document.querySelectorAll('#pr-list .pr-row').forEach(row => {
-    row.addEventListener('click', () => goProgress(row.dataset.ex));
-  });
 }
 
 // ── PROGRESS TAB ──────────────────────────────────────────────────────────────
@@ -2301,6 +2455,11 @@ state.rawText = load() || DEFAULT_LOG;
 document.getElementById('raw-log').value = state.rawText;
 recompute();
 renderPRs();
+
+document.getElementById('pr-list').addEventListener('click', e => {
+  const row = e.target.closest('.pr-row');
+  if (row && row.dataset.ex) goProgress(row.dataset.ex);
+});
 
 document.getElementById('vol-list').addEventListener('click', e => {
   const row = e.target.closest('.vol-row');
