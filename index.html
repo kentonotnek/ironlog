@@ -1935,10 +1935,10 @@ function makeChipEl(exIdx, setIdx, s) {
   chip.title = 'tap to remove';
   chip.dataset.setIdx = setIdx;
   chip.textContent = `${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${settings.unit} × ${s.reps}`;
-  chip.addEventListener('click', e => {
+  chip.onclick = e => {
     e.stopPropagation();
     builderRemoveSet(exIdx, parseInt(chip.dataset.setIdx));
-  });
+  };
   return chip;
 }
 
