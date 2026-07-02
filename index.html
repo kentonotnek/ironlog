@@ -1722,7 +1722,7 @@ function applySettings() {
   // update chips
   syncSettingsUI();
   // redraw
-  if (selectedEx) drawChart(computeProgress(sessions, selectedEx));
+  if (state.selectedEx) drawChart(computeProgress(state.sessions, state.selectedEx));
 }
 
 function syncSettingsUI() {
@@ -1762,7 +1762,7 @@ function setTheme(t) { settings.theme = t; saveSettings(); applySettings(); rend
 function setAccent(name, color, press) { settings.accent = name; settings.accentColor = color; settings.accentPress = press; saveSettings(); applySettings(); }
 function setFont(f) { settings.font = f; saveSettings(); applySettings(); }
 function setSize(s) { settings.size = s; saveSettings(); applySettings(); }
-function setUnit(u) { settings.unit = u; saveSettings(); syncSettingsUI(); renderPRs(); if (selectedEx) renderChart(); }
+function setUnit(u) { settings.unit = u; saveSettings(); syncSettingsUI(); renderPRs(); if (state.selectedEx) renderChart(); }
 
 function fmtWeight(v) {
   if (settings.unit === 'kg') return (v * 0.4536).toFixed(1);
@@ -1770,10 +1770,28 @@ function fmtWeight(v) {
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let rawText = '';
-let sessions = [], prs = {}, volume = {};
-let selectedEx = null;
-let saveTimer = null;
+let saveTimer = null;  // private — stays outside state object
+
+const state = {
+  rawText: '',
+  sessions: [],
+  prs: {},
+  volume: {},
+  selectedEx: null,
+  builder: {
+    date: '',
+    exercises: [],
+    activeIdx: -1,
+    editingIdx: -1,
+  },
+};
+
+function setRawText(text) {
+  state.rawText = text;
+  document.getElementById('raw-log').value = text;
+  recompute();
+  save(text);
+}
 
 function load() {
   try {
@@ -1792,10 +1810,10 @@ function save(text) {
 }
 
 function recompute() {
-  sessions = parseSessions(rawText);
-  prs = computePRs(sessions);
-  volume = computeVolume(sessions);
-  document.getElementById('subtitle').textContent = `${sessions.length} sessions · ${Object.keys(prs).length} exercises`;
+  state.sessions = parseSessions(state.rawText);
+  state.prs = computePRs(state.sessions);
+  state.volume = computeVolume(state.sessions);
+  document.getElementById('subtitle').textContent = `${state.sessions.length} sessions · ${Object.keys(state.prs).length} exercises`;
 }
 
 // ── TABS ─────────────────────────────────────────────────────────────────────
@@ -1818,31 +1836,26 @@ function addSession() {
 
   // Check for duplicate dates
   const newSessions = parseSessions(input);
-  const existingDates = new Set(sessions.map(s => s.date));
+  const existingDates = new Set(state.sessions.map(s => s.date));
   const dupes = newSessions.map(s => s.date).filter(d => existingDates.has(d));
   if (dupes.length > 0) {
     const dateList = dupes.map(d => isoToDisplay(d)).join(', ');
     if (!confirm(`Session(s) for ${dateList} already exist. Add anyway?`)) return;
   }
 
-  rawText = rawText + '\n\n' + input;
-  document.getElementById('raw-log').value = rawText;
+  setRawText(state.rawText + '\n\n' + input);
   document.getElementById('log-input').value = '';
-  recompute();
-  save(rawText);
   const msg = document.getElementById('add-msg');
   msg.classList.add('show');
   setTimeout(() => msg.classList.remove('show'), 2500);
 }
 
 function onRawEdit() {
-  rawText = document.getElementById('raw-log').value;
-  recompute();
-  save(rawText);
+  setRawText(document.getElementById('raw-log').value);
 }
 
 function exportLog() {
-  const blob = new Blob([rawText], { type: 'text/plain' });
+  const blob = new Blob([state.rawText], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1852,8 +1865,6 @@ function exportLog() {
 }
 
 // ── BUILDER ──────────────────────────────────────────────────────────────────
-let builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
-
 function setLogMode(mode) {
   const paste = mode === 'paste';
   document.getElementById('paste-mode').style.display = paste ? 'block' : 'none';
@@ -1868,7 +1879,7 @@ function setLogMode(mode) {
 }
 
 function refreshBuilderSuggestions() {
-  const names = new Set([...Object.values(ALIASES), ...Object.keys(prs)]);
+  const names = new Set([...Object.values(ALIASES), ...Object.keys(state.prs)]);
   document.getElementById('build-ex-suggestions').innerHTML =
     [...names].sort().map(n => `<option value="${esc(n)}">`).join('');
 }
@@ -1884,30 +1895,30 @@ function builderAddExercise() {
   const inp = document.getElementById('build-ex-input');
   const name = canon(inp.value.trim());
   if (!name) return;
-  let idx = builder.exercises.findIndex(e => e.name === name);
-  if (idx === -1) { builder.exercises.push({ name, sets: [] }); idx = builder.exercises.length - 1; }
-  builder.activeIdx = idx;
-  builder.editingIdx = -1;
+  let idx = state.builder.exercises.findIndex(e => e.name === name);
+  if (idx === -1) { state.builder.exercises.push({ name, sets: [] }); idx = state.builder.exercises.length - 1; }
+  state.builder.activeIdx = idx;
+  state.builder.editingIdx = -1;
   inp.value = '';
   renderBuilder();
   focusWeight();
 }
 
 function builderSetActive(idx) {
-  builder.activeIdx = idx;
-  builder.editingIdx = -1;
+  state.builder.activeIdx = idx;
+  state.builder.editingIdx = -1;
   renderBuilder();
   focusWeight();
 }
 
 function builderAddSet() {
-  if (builder.activeIdx === -1) return;
+  if (state.builder.activeIdx === -1) return;
   const wInput = parseFloat(document.getElementById('build-weight').value);
   // Storage is always in lbs; convert from kg if needed
   const w = settings.unit === 'kg' ? wInput / 0.4536 : wInput;
   const r = parseInt(document.getElementById('build-reps').value);
   if (isNaN(w) || isNaN(r) || r <= 0) return;
-  builder.exercises[builder.activeIdx].sets.push({ weight: Math.abs(w), reps: r, assisted: w < 0 });
+  state.builder.exercises[state.builder.activeIdx].sets.push({ weight: Math.abs(w), reps: r, assisted: w < 0 });
   document.getElementById('build-weight').value = '';
   document.getElementById('build-reps').value = '';
   renderBuilder();
@@ -1915,24 +1926,24 @@ function builderAddSet() {
 }
 
 function builderRemoveSet(exIdx, setIdx) {
-  builder.exercises[exIdx].sets.splice(setIdx, 1);
+  state.builder.exercises[exIdx].sets.splice(setIdx, 1);
   renderBuilder();
   focusWeight();
 }
 
 function builderRemoveEx(idx) {
-  builder.exercises.splice(idx, 1);
-  if (builder.activeIdx === idx)
-    builder.activeIdx = builder.exercises.length > 0 ? Math.min(idx, builder.exercises.length - 1) : -1;
-  else if (builder.activeIdx > idx)
-    builder.activeIdx--;
-  if (builder.editingIdx === idx) builder.editingIdx = -1;
-  else if (builder.editingIdx > idx) builder.editingIdx--;
+  state.builder.exercises.splice(idx, 1);
+  if (state.builder.activeIdx === idx)
+    state.builder.activeIdx = state.builder.exercises.length > 0 ? Math.min(idx, state.builder.exercises.length - 1) : -1;
+  else if (state.builder.activeIdx > idx)
+    state.builder.activeIdx--;
+  if (state.builder.editingIdx === idx) state.builder.editingIdx = -1;
+  else if (state.builder.editingIdx > idx) state.builder.editingIdx--;
   renderBuilder();
 }
 
 function builderStartEditEx(idx) {
-  builder.editingIdx = idx;
+  state.builder.editingIdx = idx;
   renderBuilder();
   requestAnimationFrame(() => {
     const i = document.getElementById('build-ex-edit');
@@ -1941,13 +1952,13 @@ function builderStartEditEx(idx) {
 }
 
 function builderSaveExName(idx, commit) {
-  if (builder.editingIdx === -1) return;
+  if (state.builder.editingIdx === -1) return;
   const inp = document.getElementById('build-ex-edit');
   if (commit && inp) {
     const name = canon(inp.value.trim());
-    if (name) builder.exercises[idx].name = name;
+    if (name) state.builder.exercises[idx].name = name;
   }
-  builder.editingIdx = -1;
+  state.builder.editingIdx = -1;
   renderBuilder();
   focusWeight();
 }
@@ -1959,16 +1970,16 @@ function renderBuilder() {
   // blur first so the browser doesn't scroll-to-destroyed-input on innerHTML swap
   if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   window.scrollTo(0, sy);
-  if (builder.exercises.length === 0) {
+  if (state.builder.exercises.length === 0) {
     preview.innerHTML = '';
     actions.style.display = 'none';
     window.scrollTo(0, sy);
     return;
   }
   const unitLbl = settings.unit;
-  preview.innerHTML = builder.exercises.map((ex, exIdx) => {
-    const isActive = exIdx === builder.activeIdx;
-    const isEditing = exIdx === builder.editingIdx;
+  preview.innerHTML = state.builder.exercises.map((ex, exIdx) => {
+    const isActive = exIdx === state.builder.activeIdx;
+    const isEditing = exIdx === state.builder.editingIdx;
     const chips = ex.sets.map((s, sIdx) =>
       `<span class="build-set-chip" title="tap to remove"
              onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${unitLbl} × ${s.reps}</span>`
@@ -2004,18 +2015,15 @@ function renderBuilder() {
 function builderSave() {
   const isoVal = document.getElementById('build-date').value;
   if (!isoVal) { alert('Enter a date first.'); return; }
-  const withSets = builder.exercises.filter(e => e.sets.length > 0);
+  const withSets = state.builder.exercises.filter(e => e.sets.length > 0);
   if (withSets.length === 0) { alert('Add at least one set.'); return; }
   let text = `## ${isoVal}`;
   for (const ex of withSets) {
     text += `\n${ex.name}`;
     for (const s of ex.sets) text += `\n- ${s.assisted ? '-' : ''}${s.weight}# ${s.reps}`;
   }
-  rawText = rawText + '\n\n' + text;
-  document.getElementById('raw-log').value = rawText;
-  recompute();
-  save(rawText);
-  builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
+  setRawText(state.rawText + '\n\n' + text);
+  state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = new Date().toISOString().split('T')[0];
   renderBuilder();
   const msg = document.getElementById('build-save-msg');
@@ -2024,7 +2032,7 @@ function builderSave() {
 }
 
 function builderClear() {
-  builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
+  state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = '';
   renderBuilder();
 }
@@ -2032,11 +2040,11 @@ function builderClear() {
 // ── PRs TAB ───────────────────────────────────────────────────────────────────
 function renderPRs() {
   const list = document.getElementById('pr-list');
-  const exs = Object.keys(prs).sort();
-  const maxVol = Math.max(...Object.values(volume), 1);
+  const exs = Object.keys(state.prs).sort();
+  const maxVol = Math.max(...Object.values(state.volume), 1);
   list.innerHTML = exs.map(ex => {
-    const pr = prs[ex];
-    const vol = volume[ex] || 0;
+    const pr = state.prs[ex];
+    const vol = state.volume[ex] || 0;
     const pct = (vol / maxVol * 100).toFixed(1);
     const wStr = pr.dual ? `${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}` : `${fmtWeight(pr.v)}`;
     return `<div class="pr-row" data-ex="${esc(ex)}">
@@ -2055,7 +2063,7 @@ function renderPRs() {
 
 // ── PROGRESS TAB ──────────────────────────────────────────────────────────────
 function goProgress(ex) {
-  selectedEx = ex;
+  state.selectedEx = ex;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = document.querySelector('.tab-btn[aria-controls="panel-progress"]');
@@ -2067,16 +2075,16 @@ function goProgress(ex) {
 }
 
 function renderProgress() {
-  const exs = Object.keys(prs).sort();
+  const exs = Object.keys(state.prs).sort();
   const btns = document.getElementById('ex-buttons');
-  btns.innerHTML = exs.map(ex => `<button class="ex-btn${ex === selectedEx ? ' active' : ''}" data-ex="${esc(ex)}">${esc(ex)}</button>`).join('');
+  btns.innerHTML = exs.map(ex => `<button class="ex-btn${ex === state.selectedEx ? ' active' : ''}" data-ex="${esc(ex)}">${esc(ex)}</button>`).join('');
   document.querySelectorAll('#ex-buttons .ex-btn').forEach(btn => {
     btn.addEventListener('click', () => selectEx(btn.dataset.ex));
   });
   renderChart();
 }
 
-function selectEx(ex) { selectedEx = ex; renderProgress(); }
+function selectEx(ex) { state.selectedEx = ex; renderProgress(); }
 
 function renderChart() {
   const noData = document.getElementById('no-data');
@@ -2084,7 +2092,7 @@ function renderChart() {
   const setsList = document.getElementById('sets-list');
   const setsLabel = document.getElementById('sets-label');
 
-  if (!selectedEx) {
+  if (!state.selectedEx) {
     document.getElementById('progress-title').textContent = '';
     document.getElementById('progress-sub').textContent = '';
     noData.textContent = 'Pick an exercise above.';
@@ -2094,8 +2102,8 @@ function renderChart() {
     return;
   }
 
-  const data = computeProgress(sessions, selectedEx);
-  document.getElementById('progress-title').textContent = selectedEx;
+  const data = computeProgress(state.sessions, state.selectedEx);
+  document.getElementById('progress-title').textContent = state.selectedEx;
 
   if (data.length < 2) {
     document.getElementById('progress-sub').textContent = '';
@@ -2108,11 +2116,11 @@ function renderChart() {
     drawChart(data);
   }
 
-  const sessionsWithEx = sessions.filter(s => s.exercises[selectedEx]).sort((a, b) => compareDates(a.date, b.date));
+  const sessionsWithEx = state.sessions.filter(s => s.exercises[state.selectedEx]).sort((a, b) => compareDates(a.date, b.date));
   if (sessionsWithEx.length) {
     setsLabel.style.display = 'block';
     setsList.innerHTML = sessionsWithEx.map(s => {
-      const chips = s.exercises[selectedEx].map(set => {
+      const chips = s.exercises[state.selectedEx].map(set => {
         const wRaw = set.dual ? `${fmtWeight(set.v)}/${fmtWeight(set.v2)}` : `${set.assisted ? '-' : ''}${fmtWeight(set.v)}`;
         return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}</span>`;
       }).join('');
@@ -2218,8 +2226,8 @@ function drawChart(data) {
 
 // ── VOLUME TAB ────────────────────────────────────────────────────────────────
 function renderVolume() {
-  const maxVol = Math.max(...Object.values(volume), 1);
-  const sorted = Object.entries(volume).sort((a, b) => b[1] - a[1]);
+  const maxVol = Math.max(...Object.values(state.volume), 1);
+  const sorted = Object.entries(state.volume).sort((a, b) => b[1] - a[1]);
   document.getElementById('vol-list').innerHTML = sorted.map(([ex, count]) => {
     const pct = (count / maxVol * 100).toFixed(1);
     const low = count / maxVol < 0.35;
@@ -2244,8 +2252,10 @@ function renderVolume() {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 loadSettings();
 applySettings();
-rawText = load() || DEFAULT_LOG;
-document.getElementById('raw-log').value = rawText;
+state.rawText = load() || DEFAULT_LOG;
+// Call setRawText's side effects manually here since we're initializing
+// (setRawText would also call save() which we don't want at init)
+document.getElementById('raw-log').value = state.rawText;
 recompute();
 renderPRs();
 </script>
