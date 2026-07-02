@@ -1344,6 +1344,10 @@ function esc(s) {
     .replace(/'/g, '&#39;');
 }
 
+function setText(id, val) {
+  document.getElementById(id).textContent = val;
+}
+
 // ── STORAGE ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ironlog_v1';
 const SETTINGS_KEY = 'ironlog_settings';
@@ -1758,11 +1762,21 @@ function closeSettings() {
   document.getElementById('settings-drawer').classList.remove('open');
 }
 
-function setTheme(t) { settings.theme = t; saveSettings(); applySettings(); renderPRs(); }
+function setTheme(t) { settings.theme = t; saveSettings(); applySettings(); }
 function setAccent(name, color, press) { settings.accent = name; settings.accentColor = color; settings.accentPress = press; saveSettings(); applySettings(); }
 function setFont(f) { settings.font = f; saveSettings(); applySettings(); }
 function setSize(s) { settings.size = s; saveSettings(); applySettings(); }
-function setUnit(u) { settings.unit = u; saveSettings(); syncSettingsUI(); renderPRs(); if (state.selectedEx) renderChart(); }
+function setUnit(u) {
+  settings.unit = u;
+  saveSettings();
+  syncSettingsUI();
+  if (document.querySelector('#pr-list .pr-row')) {
+    updatePRWeights();
+  } else {
+    renderPRs();
+  }
+  if (state.selectedEx) renderChart();
+}
 
 function fmtWeight(v) {
   if (settings.unit === 'kg') return (v * 0.4536).toFixed(1);
@@ -2038,6 +2052,25 @@ function builderClear() {
 }
 
 // ── PRs TAB ───────────────────────────────────────────────────────────────────
+function updatePRWeights() {
+  document.querySelectorAll('#pr-list .pr-row').forEach(row => {
+    const ex = row.dataset.ex;
+    const pr = state.prs[ex];
+    if (!pr) return;
+    const wStr = pr.dual
+      ? `${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}`
+      : fmtWeight(pr.v);
+    // Update weight text node (text before the .pr-weight-unit span)
+    const weightEl = row.querySelector('.pr-weight');
+    weightEl.childNodes[0].textContent = wStr;
+    // Update unit label
+    row.querySelector('.pr-weight-unit').textContent = ' ' + settings.unit;
+    // Update meta line
+    row.querySelector('.pr-meta').textContent =
+      `${isoToDisplay(pr.date)} · ${state.volume[ex] || 0} sets`;
+  });
+}
+
 function renderPRs() {
   const list = document.getElementById('pr-list');
   const exs = Object.keys(state.prs).sort();
@@ -2074,17 +2107,30 @@ function goProgress(ex) {
   renderProgress();
 }
 
-function renderProgress() {
+function renderExButtons() {
   const exs = Object.keys(state.prs).sort();
-  const btns = document.getElementById('ex-buttons');
-  btns.innerHTML = exs.map(ex => `<button class="ex-btn${ex === state.selectedEx ? ' active' : ''}" data-ex="${esc(ex)}">${esc(ex)}</button>`).join('');
-  document.querySelectorAll('#ex-buttons .ex-btn').forEach(btn => {
-    btn.addEventListener('click', () => selectEx(btn.dataset.ex));
-  });
+  document.getElementById('ex-buttons').innerHTML = exs.map(ex =>
+    `<button class="ex-btn" type="button" data-ex="${esc(ex)}">${esc(ex)}</button>`
+  ).join('');
+  syncExButtonActive();
+}
+
+function syncExButtonActive() {
+  document.querySelectorAll('#ex-buttons .ex-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.ex === state.selectedEx)
+  );
+}
+
+function renderProgress() {
+  renderExButtons();
   renderChart();
 }
 
-function selectEx(ex) { state.selectedEx = ex; renderProgress(); }
+function selectEx(ex) {
+  state.selectedEx = ex;
+  syncExButtonActive();
+  renderChart();
+}
 
 function renderChart() {
   const noData = document.getElementById('no-data');
@@ -2093,9 +2139,9 @@ function renderChart() {
   const setsLabel = document.getElementById('sets-label');
 
   if (!state.selectedEx) {
-    document.getElementById('progress-title').textContent = '';
-    document.getElementById('progress-sub').textContent = '';
-    noData.textContent = 'Pick an exercise above.';
+    setText('progress-title', '');
+    setText('progress-sub', '');
+    setText('no-data', 'Pick an exercise above.');
     chartContainer.style.display = 'none';
     setsLabel.style.display = 'none';
     setsList.innerHTML = '';
@@ -2103,16 +2149,16 @@ function renderChart() {
   }
 
   const data = computeProgress(state.sessions, state.selectedEx);
-  document.getElementById('progress-title').textContent = state.selectedEx;
+  setText('progress-title', state.selectedEx);
 
   if (data.length < 2) {
-    document.getElementById('progress-sub').textContent = '';
-    noData.textContent = data.length === 0 ? 'No data yet.' : 'Need at least 2 sessions to chart.';
+    setText('progress-sub', '');
+    setText('no-data', data.length === 0 ? 'No data yet.' : 'Need at least 2 sessions to chart.');
     chartContainer.style.display = 'none';
   } else {
-    noData.textContent = '';
+    setText('no-data', '');
     chartContainer.style.display = 'block';
-    document.getElementById('progress-sub').textContent = `Max weight per session (${settings.unit}) · ${data.length} data points`;
+    setText('progress-sub', `Max weight per session (${settings.unit}) · ${data.length} data points`);
     drawChart(data);
   }
 
@@ -2239,9 +2285,6 @@ function renderVolume() {
       <div class="vol-track"><div class="vol-fill${low ? ' low' : ''}" style="width:${pct}%"></div></div>
     </div>`;
   }).join('');
-  document.querySelectorAll('#vol-list .vol-row').forEach(row => {
-    row.addEventListener('click', () => goProgress(row.dataset.ex));
-  });
 
   const low = sorted.filter(([, c]) => c / maxVol < 0.35).sort((a, b) => a[1] - b[1]);
   document.getElementById('attention-list').innerHTML = low.map(([ex, count]) =>
@@ -2258,6 +2301,16 @@ state.rawText = load() || DEFAULT_LOG;
 document.getElementById('raw-log').value = state.rawText;
 recompute();
 renderPRs();
+
+document.getElementById('vol-list').addEventListener('click', e => {
+  const row = e.target.closest('.vol-row');
+  if (row && row.dataset.ex) goProgress(row.dataset.ex);
+});
+
+document.getElementById('ex-buttons').addEventListener('click', e => {
+  const btn = e.target.closest('.ex-btn');
+  if (btn && btn.dataset.ex) selectEx(btn.dataset.ex);
+});
 </script>
 </body>
 </html>
