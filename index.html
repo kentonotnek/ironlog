@@ -1916,7 +1916,8 @@ function addSession() {
     if (!confirm(`Session(s) for ${dateList} already exist. Add anyway?`)) return;
   }
 
-  setRawText(state.rawText + '\n\n' + input);
+  setRawText(state.rawText ? input + '\n\n' + state.rawText : input);
+  document.getElementById('raw-log').scrollTop = 0;
   document.getElementById('log-input').value = '';
   const msg = document.getElementById('add-msg');
   msg.classList.add('show');
@@ -2243,7 +2244,8 @@ function builderSave() {
     text += `\n${ex.name}`;
     for (const s of ex.sets) text += `\n- ${s.assisted ? '-' : ''}${s.weight}# ${s.reps}`;
   }
-  setRawText(state.rawText + '\n\n' + text);
+  setRawText(state.rawText ? text + '\n\n' + state.rawText : text);
+  document.getElementById('raw-log').scrollTop = 0;
   state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = todayLocalISO();
   buildPreviewFromScratch();
