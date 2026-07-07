@@ -1193,16 +1193,16 @@ body.light #build-date {
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="save-indicator">SAVED ✓</span>
-    <button id="export-btn" aria-label="Export workout log" onclick="exportLog()">EXPORT</button>
-    <button id="settings-btn" aria-label="Open settings" onclick="openSettings()">⚙ SETTINGS</button>
+    <button type="button" id="export-btn" aria-label="Export workout log" onclick="exportLog()">EXPORT</button>
+    <button type="button" id="settings-btn" aria-label="Open settings" onclick="openSettings()">⚙ SETTINGS</button>
   </div>
 </div>
 
 <div id="tabs" role="tablist">
-  <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-log" onclick="switchTab('log',this)">⌨ Log</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-prs" onclick="switchTab('prs',this)">🏆 PRs</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-progress" onclick="switchTab('progress',this)">📈 Progress</button>
-  <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-volume" onclick="switchTab('volume',this)">🔥 Volume</button>
+  <button type="button" class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-log" onclick="switchTab('log',this)">⌨ Log</button>
+  <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-prs" onclick="switchTab('prs',this)">🏆 PRs</button>
+  <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-progress" onclick="switchTab('progress',this)">📈 Progress</button>
+  <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-volume" onclick="switchTab('volume',this)">🔥 Volume</button>
 </div>
 
 <div id="content">
@@ -1210,8 +1210,8 @@ body.light #build-date {
   <!-- LOG -->
   <div id="panel-log" class="panel active" role="tabpanel">
     <div id="log-mode-toggle">
-      <button class="mode-btn active" id="mode-paste-btn" onclick="setLogMode('paste')">PASTE</button>
-      <button class="mode-btn" id="mode-build-btn" onclick="setLogMode('build')">BUILD</button>
+      <button type="button" class="mode-btn active" id="mode-paste-btn" onclick="setLogMode('paste')">PASTE</button>
+      <button type="button" class="mode-btn" id="mode-build-btn" onclick="setLogMode('build')">BUILD</button>
     </div>
 
     <!-- PASTE mode -->
@@ -1221,7 +1221,7 @@ body.light #build-date {
       </p>
       <textarea id="log-input" placeholder="## 25&#10;Dips&#10;- 50# 10&#10;- 55# 8&#10;Lat Pulldown&#10;- 140# 10&#10;- 150# 10"></textarea>
       <div style="display:flex;align-items:center;margin-top:10px">
-        <button id="add-btn" onclick="addSession()">ADD SESSION</button>
+        <button type="button" id="add-btn" onclick="addSession()">ADD SESSION</button>
         <span id="add-msg">✓ Session saved</span>
       </div>
       <div id="full-log-label">Full log — edit directly if needed</div>
@@ -1240,13 +1240,13 @@ body.light #build-date {
           <input type="text" id="build-ex-input" class="build-input" placeholder="e.g. Dips" list="build-ex-suggestions"
                  onkeydown="if(event.key==='Enter')builderAddExercise()" />
           <datalist id="build-ex-suggestions"></datalist>
-          <button class="build-add-btn" onclick="builderAddExercise()">+ ADD</button>
+          <button type="button" class="build-add-btn" onclick="builderAddExercise()">+ ADD</button>
         </div>
       </div>
       <div id="build-preview"></div>
       <div id="build-actions" style="display:none;margin-top:8px">
-        <button id="build-save-btn" onclick="builderSave()">SAVE SESSION</button>
-        <button id="build-clear-btn" onclick="builderClear()">CLEAR</button>
+        <button type="button" id="build-save-btn" onclick="builderSave()">SAVE SESSION</button>
+        <button type="button" id="build-clear-btn" onclick="builderClear()">CLEAR</button>
       </div>
       <div id="build-save-msg">✓ Session saved</div>
     </div>
@@ -1287,48 +1287,48 @@ body.light #build-date {
 <div id="settings-drawer">
   <div id="settings-header">
     <span id="settings-title">SETTINGS</span>
-    <button id="settings-close" onclick="closeSettings()">×</button>
+    <button type="button" id="settings-close" onclick="closeSettings()">×</button>
   </div>
   <div class="settings-section">
     <div class="settings-label">THEME</div>
     <div class="settings-chips">
-      <button class="settings-chip" id="chip-dark" onclick="setTheme('dark')">DARK</button>
-      <button class="settings-chip" id="chip-light" onclick="setTheme('light')">LIGHT</button>
+      <button type="button" class="settings-chip" id="chip-dark" onclick="setTheme('dark')">DARK</button>
+      <button type="button" class="settings-chip" id="chip-light" onclick="setTheme('light')">LIGHT</button>
     </div>
   </div>
   <div class="settings-section">
     <div class="settings-label">ACCENT COLOR</div>
     <div class="settings-chips">
-      <button class="accent-swatch" id="swatch-yellow" style="background:#E8FF47" onclick="setAccent('yellow','#E8FF47','#d4eb3f')" title="Yellow"></button>
-      <button class="accent-swatch" id="swatch-blue" style="background:#47c8ff" onclick="setAccent('blue','#47c8ff','#30b0e8')" title="Blue"></button>
-      <button class="accent-swatch" id="swatch-orange" style="background:#ff8c47" onclick="setAccent('orange','#ff8c47','#e87030')" title="Orange"></button>
-      <button class="accent-swatch" id="swatch-green" style="background:#6dff8c" onclick="setAccent('green','#6dff8c','#50e070')" title="Green"></button>
-      <button class="accent-swatch" id="swatch-red" style="background:#ff5c6e" onclick="setAccent('red','#ff5c6e','#e84455')" title="Red"></button>
-      <button class="accent-swatch" id="swatch-purple" style="background:#c47aff" onclick="setAccent('purple','#c47aff','#aa60e8')" title="Purple"></button>
+      <button type="button" class="accent-swatch" id="swatch-yellow" style="background:#E8FF47" onclick="setAccent('yellow','#E8FF47','#d4eb3f')" title="Yellow"></button>
+      <button type="button" class="accent-swatch" id="swatch-blue" style="background:#47c8ff" onclick="setAccent('blue','#47c8ff','#30b0e8')" title="Blue"></button>
+      <button type="button" class="accent-swatch" id="swatch-orange" style="background:#ff8c47" onclick="setAccent('orange','#ff8c47','#e87030')" title="Orange"></button>
+      <button type="button" class="accent-swatch" id="swatch-green" style="background:#6dff8c" onclick="setAccent('green','#6dff8c','#50e070')" title="Green"></button>
+      <button type="button" class="accent-swatch" id="swatch-red" style="background:#ff5c6e" onclick="setAccent('red','#ff5c6e','#e84455')" title="Red"></button>
+      <button type="button" class="accent-swatch" id="swatch-purple" style="background:#c47aff" onclick="setAccent('purple','#c47aff','#aa60e8')" title="Purple"></button>
     </div>
   </div>
   <div class="settings-section">
     <div class="settings-label">FONT</div>
     <div class="settings-chips">
-      <button class="settings-chip" id="chip-font-mono" onclick="setFont('mono')" style="font-family:'Courier New',monospace">MONO</button>
-      <button class="settings-chip" id="chip-font-sans" onclick="setFont('sans')" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">SANS</button>
-      <button class="settings-chip" id="chip-font-rounded" onclick="setFont('rounded')" style="font-family:ui-rounded,'Varela Round',system-ui,sans-serif">ROUND</button>
-      <button class="settings-chip" id="chip-font-serif" onclick="setFont('serif')" style="font-family:Georgia,'Palatino Linotype',serif">SERIF</button>
+      <button type="button" class="settings-chip" id="chip-font-mono" onclick="setFont('mono')" style="font-family:'Courier New',monospace">MONO</button>
+      <button type="button" class="settings-chip" id="chip-font-sans" onclick="setFont('sans')" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">SANS</button>
+      <button type="button" class="settings-chip" id="chip-font-rounded" onclick="setFont('rounded')" style="font-family:ui-rounded,'Varela Round',system-ui,sans-serif">ROUND</button>
+      <button type="button" class="settings-chip" id="chip-font-serif" onclick="setFont('serif')" style="font-family:Georgia,'Palatino Linotype',serif">SERIF</button>
     </div>
   </div>
   <div class="settings-section">
     <div class="settings-label">TEXT SIZE</div>
     <div class="settings-chips">
-      <button class="settings-chip" id="chip-size-sm" onclick="setSize('sm')">SMALL</button>
-      <button class="settings-chip" id="chip-size-md" onclick="setSize('md')">MEDIUM</button>
-      <button class="settings-chip" id="chip-size-lg" onclick="setSize('lg')">LARGE</button>
+      <button type="button" class="settings-chip" id="chip-size-sm" onclick="setSize('sm')">SMALL</button>
+      <button type="button" class="settings-chip" id="chip-size-md" onclick="setSize('md')">MEDIUM</button>
+      <button type="button" class="settings-chip" id="chip-size-lg" onclick="setSize('lg')">LARGE</button>
     </div>
   </div>
   <div class="settings-section">
     <div class="settings-label">WEIGHT UNITS</div>
     <div class="settings-chips">
-      <button class="settings-chip" id="chip-unit-lbs" onclick="setUnit('lbs')">LBS</button>
-      <button class="settings-chip" id="chip-unit-kg" onclick="setUnit('kg')">KG</button>
+      <button type="button" class="settings-chip" id="chip-unit-lbs" onclick="setUnit('lbs')">LBS</button>
+      <button type="button" class="settings-chip" id="chip-unit-kg" onclick="setUnit('kg')">KG</button>
     </div>
   </div>
 </div>
@@ -1342,6 +1342,10 @@ function esc(s) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function setText(id, val) {
+  document.getElementById(id).textContent = val;
 }
 
 // ── STORAGE ──────────────────────────────────────────────────────────────────
@@ -1536,7 +1540,7 @@ function normalizeDate(str) {
   }
   // Bare integer: treat as day of current month
   const n = parseInt(str);
-  if (!isNaN(n)) {
+  if (!isNaN(n) && n >= 1 && n <= 31) {
     const now = new Date();
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -1722,7 +1726,7 @@ function applySettings() {
   // update chips
   syncSettingsUI();
   // redraw
-  if (selectedEx) drawChart(computeProgress(sessions, selectedEx));
+  if (state.selectedEx) drawChart(computeProgress(state.sessions, state.selectedEx));
 }
 
 function syncSettingsUI() {
@@ -1758,11 +1762,21 @@ function closeSettings() {
   document.getElementById('settings-drawer').classList.remove('open');
 }
 
-function setTheme(t) { settings.theme = t; saveSettings(); applySettings(); renderPRs(); }
+function setTheme(t) { settings.theme = t; saveSettings(); applySettings(); }
 function setAccent(name, color, press) { settings.accent = name; settings.accentColor = color; settings.accentPress = press; saveSettings(); applySettings(); }
 function setFont(f) { settings.font = f; saveSettings(); applySettings(); }
 function setSize(s) { settings.size = s; saveSettings(); applySettings(); }
-function setUnit(u) { settings.unit = u; saveSettings(); syncSettingsUI(); renderPRs(); if (selectedEx) renderChart(); }
+function setUnit(u) {
+  settings.unit = u;
+  saveSettings();
+  syncSettingsUI();
+  if (document.querySelector('#pr-list .pr-row')) {
+    updatePRWeights();
+  } else {
+    renderPRs();
+  }
+  if (state.selectedEx) renderChart();
+}
 
 function fmtWeight(v) {
   if (settings.unit === 'kg') return (v * 0.4536).toFixed(1);
@@ -1770,10 +1784,28 @@ function fmtWeight(v) {
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let rawText = '';
-let sessions = [], prs = {}, volume = {};
-let selectedEx = null;
-let saveTimer = null;
+let saveTimer = null;  // private — stays outside state object
+
+const state = {
+  rawText: '',
+  sessions: [],
+  prs: {},
+  volume: {},
+  selectedEx: null,
+  builder: {
+    date: '',
+    exercises: [],
+    activeIdx: -1,
+    editingIdx: -1,
+  },
+};
+
+function setRawText(text) {
+  state.rawText = text;
+  document.getElementById('raw-log').value = text;
+  recompute();
+  save(text);
+}
 
 function load() {
   try {
@@ -1792,10 +1824,10 @@ function save(text) {
 }
 
 function recompute() {
-  sessions = parseSessions(rawText);
-  prs = computePRs(sessions);
-  volume = computeVolume(sessions);
-  document.getElementById('subtitle').textContent = `${sessions.length} sessions · ${Object.keys(prs).length} exercises`;
+  state.sessions = parseSessions(state.rawText);
+  state.prs = computePRs(state.sessions);
+  state.volume = computeVolume(state.sessions);
+  document.getElementById('subtitle').textContent = `${state.sessions.length} sessions · ${Object.keys(state.prs).length} exercises`;
 }
 
 // ── TABS ─────────────────────────────────────────────────────────────────────
@@ -1818,31 +1850,26 @@ function addSession() {
 
   // Check for duplicate dates
   const newSessions = parseSessions(input);
-  const existingDates = new Set(sessions.map(s => s.date));
+  const existingDates = new Set(state.sessions.map(s => s.date));
   const dupes = newSessions.map(s => s.date).filter(d => existingDates.has(d));
   if (dupes.length > 0) {
     const dateList = dupes.map(d => isoToDisplay(d)).join(', ');
     if (!confirm(`Session(s) for ${dateList} already exist. Add anyway?`)) return;
   }
 
-  rawText = rawText + '\n\n' + input;
-  document.getElementById('raw-log').value = rawText;
+  setRawText(state.rawText + '\n\n' + input);
   document.getElementById('log-input').value = '';
-  recompute();
-  save(rawText);
   const msg = document.getElementById('add-msg');
   msg.classList.add('show');
   setTimeout(() => msg.classList.remove('show'), 2500);
 }
 
 function onRawEdit() {
-  rawText = document.getElementById('raw-log').value;
-  recompute();
-  save(rawText);
+  setRawText(document.getElementById('raw-log').value);
 }
 
 function exportLog() {
-  const blob = new Blob([rawText], { type: 'text/plain' });
+  const blob = new Blob([state.rawText], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -1852,8 +1879,6 @@ function exportLog() {
 }
 
 // ── BUILDER ──────────────────────────────────────────────────────────────────
-let builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
-
 function setLogMode(mode) {
   const paste = mode === 'paste';
   document.getElementById('paste-mode').style.display = paste ? 'block' : 'none';
@@ -1868,7 +1893,7 @@ function setLogMode(mode) {
 }
 
 function refreshBuilderSuggestions() {
-  const names = new Set([...Object.values(ALIASES), ...Object.keys(prs)]);
+  const names = new Set([...Object.values(ALIASES), ...Object.keys(state.prs)]);
   document.getElementById('build-ex-suggestions').innerHTML =
     [...names].sort().map(n => `<option value="${esc(n)}">`).join('');
 }
@@ -1880,163 +1905,336 @@ function focusWeight() {
   });
 }
 
+// ── BUILDER DOM HELPERS ───────────────────────────────────────────────────────
+function makeActiveFooter() {
+  const div = document.createElement('div');
+  div.className = 'build-set-input-row build-ex-footer';
+  div.innerHTML = `
+    <input type="number" id="build-weight" class="build-input-sm"
+           placeholder="${settings.unit}" step="2.5"
+           onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
+    <span class="build-unit">${settings.unit}</span>
+    <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
+           onkeydown="if(event.key==='Enter')builderAddSet()" />
+    <button type="button" class="build-add-btn" onclick="builderAddSet()">+ SET</button>`;
+  return div;
+}
+
+function makeInactiveFooter(exIdx) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'build-switch-btn build-ex-footer';
+  btn.textContent = '+ ADD SETS';
+  btn.onclick = () => builderSetActive(exIdx);
+  return btn;
+}
+
+function makeChipEl(exIdx, setIdx, s) {
+  const chip = document.createElement('span');
+  chip.className = 'build-set-chip';
+  chip.title = 'tap to remove';
+  chip.dataset.setIdx = setIdx;
+  chip.textContent = `${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${settings.unit} × ${s.reps}`;
+  chip.onclick = e => {
+    e.stopPropagation();
+    builderRemoveSet(exIdx, parseInt(chip.dataset.setIdx));
+  };
+  return chip;
+}
+
+function makeExBlock(exIdx, name, sets, isActive) {
+  const div = document.createElement('div');
+  div.className = 'build-ex-block' + (isActive ? ' active' : '');
+  div.dataset.exIdx = exIdx;
+
+  const header = document.createElement('div');
+  header.className = 'build-ex-header';
+
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'build-ex-name';
+  nameSpan.style.cursor = 'text';
+  nameSpan.title = 'tap to rename';
+  nameSpan.textContent = name;
+  nameSpan.onclick = () => builderStartEditEx(exIdx);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'build-ex-remove';
+  removeBtn.title = 'remove';
+  removeBtn.textContent = '×';
+  removeBtn.onclick = () => builderRemoveEx(exIdx);
+
+  header.appendChild(nameSpan);
+  header.appendChild(removeBtn);
+
+  const chipsEl = document.createElement('div');
+  chipsEl.className = 'build-set-chips';
+  sets.forEach((s, si) => chipsEl.appendChild(makeChipEl(exIdx, si, s)));
+
+  div.appendChild(header);
+  div.appendChild(chipsEl);
+  div.appendChild(isActive ? makeActiveFooter() : makeInactiveFooter(exIdx));
+  return div;
+}
+
 function builderAddExercise() {
   const inp = document.getElementById('build-ex-input');
   const name = canon(inp.value.trim());
   if (!name) return;
-  let idx = builder.exercises.findIndex(e => e.name === name);
-  if (idx === -1) { builder.exercises.push({ name, sets: [] }); idx = builder.exercises.length - 1; }
-  builder.activeIdx = idx;
-  builder.editingIdx = -1;
+
+  let idx = state.builder.exercises.findIndex(e => e.name === name);
+  const isNew = idx === -1;
+  if (isNew) {
+    state.builder.exercises.push({ name, sets: [] });
+    idx = state.builder.exercises.length - 1;
+  }
+
+  const prevActive = state.builder.activeIdx;
+  state.builder.activeIdx = idx;
+  state.builder.editingIdx = -1;
   inp.value = '';
-  renderBuilder();
+
+  if (isNew) {
+    // Deactivate the previously-active block's footer
+    if (prevActive !== -1) {
+      const prevBlock = document.querySelector(`[data-ex-idx="${prevActive}"]`);
+      if (prevBlock) {
+        prevBlock.classList.remove('active');
+        prevBlock.querySelector('.build-ex-footer').replaceWith(makeInactiveFooter(prevActive));
+      }
+    }
+    // Append the new block
+    const block = makeExBlock(idx, name, [], true);
+    document.getElementById('build-preview').appendChild(block);
+    document.getElementById('build-actions').style.display = 'block';
+  } else {
+    // Exercise already exists — just activate it
+    builderSetActive(idx);
+    return;
+  }
+
   focusWeight();
 }
 
 function builderSetActive(idx) {
-  builder.activeIdx = idx;
-  builder.editingIdx = -1;
-  renderBuilder();
+  const prev = state.builder.activeIdx;
+  state.builder.activeIdx = idx;
+  state.builder.editingIdx = -1;
+
+  if (prev !== -1 && prev !== idx) {
+    const prevBlock = document.querySelector(`[data-ex-idx="${prev}"]`);
+    if (prevBlock) {
+      prevBlock.classList.remove('active');
+      prevBlock.querySelector('.build-ex-footer').replaceWith(makeInactiveFooter(prev));
+    }
+  }
+
+  const newBlock = document.querySelector(`[data-ex-idx="${idx}"]`);
+  if (newBlock) {
+    newBlock.classList.add('active');
+    const curFooter = newBlock.querySelector('.build-ex-footer');
+    if (curFooter && !curFooter.classList.contains('build-set-input-row')) {
+      curFooter.replaceWith(makeActiveFooter());
+    }
+  }
+
   focusWeight();
 }
 
 function builderAddSet() {
-  if (builder.activeIdx === -1) return;
+  if (state.builder.activeIdx === -1) return;
   const wInput = parseFloat(document.getElementById('build-weight').value);
-  // Storage is always in lbs; convert from kg if needed
   const w = settings.unit === 'kg' ? wInput / 0.4536 : wInput;
   const r = parseInt(document.getElementById('build-reps').value);
   if (isNaN(w) || isNaN(r) || r <= 0) return;
-  builder.exercises[builder.activeIdx].sets.push({ weight: Math.abs(w), reps: r, assisted: w < 0 });
+
+  const exIdx = state.builder.activeIdx;
+  const setData = { weight: Math.abs(w), reps: r, assisted: w < 0 };
+  state.builder.exercises[exIdx].sets.push(setData);
+  const setIdx = state.builder.exercises[exIdx].sets.length - 1;
+
+  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
+  block.querySelector('.build-set-chips').appendChild(makeChipEl(exIdx, setIdx, setData));
+
   document.getElementById('build-weight').value = '';
   document.getElementById('build-reps').value = '';
-  renderBuilder();
   focusWeight();
 }
 
 function builderRemoveSet(exIdx, setIdx) {
-  builder.exercises[exIdx].sets.splice(setIdx, 1);
-  renderBuilder();
-  focusWeight();
+  state.builder.exercises[exIdx].sets.splice(setIdx, 1);
+
+  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
+  const chipsEl = block.querySelector('.build-set-chips');
+
+  // Rebuild chips for this exercise only (indices shifted)
+  chipsEl.innerHTML = '';
+  state.builder.exercises[exIdx].sets.forEach((s, si) =>
+    chipsEl.appendChild(makeChipEl(exIdx, si, s))
+  );
+
+  if (exIdx === state.builder.activeIdx) focusWeight();
 }
 
 function builderRemoveEx(idx) {
-  builder.exercises.splice(idx, 1);
-  if (builder.activeIdx === idx)
-    builder.activeIdx = builder.exercises.length > 0 ? Math.min(idx, builder.exercises.length - 1) : -1;
-  else if (builder.activeIdx > idx)
-    builder.activeIdx--;
-  if (builder.editingIdx === idx) builder.editingIdx = -1;
-  else if (builder.editingIdx > idx) builder.editingIdx--;
-  renderBuilder();
+  state.builder.exercises.splice(idx, 1);
+
+  // Recalculate active/editing indices
+  if (state.builder.activeIdx === idx)
+    state.builder.activeIdx = state.builder.exercises.length > 0
+      ? Math.min(idx, state.builder.exercises.length - 1) : -1;
+  else if (state.builder.activeIdx > idx)
+    state.builder.activeIdx--;
+  if (state.builder.editingIdx === idx) state.builder.editingIdx = -1;
+  else if (state.builder.editingIdx > idx) state.builder.editingIdx--;
+
+  // Remove the block from DOM
+  const block = document.querySelector(`[data-ex-idx="${idx}"]`);
+  if (block) block.remove();
+
+  // Re-index remaining blocks
+  const preview = document.getElementById('build-preview');
+  preview.querySelectorAll('.build-ex-block').forEach((b, i) => {
+    b.dataset.exIdx = i;
+    b.classList.toggle('active', i === state.builder.activeIdx);
+    const removeBtn = b.querySelector('.build-ex-remove');
+    if (removeBtn) removeBtn.onclick = () => builderRemoveEx(i);
+    const switchBtn = b.querySelector('.build-switch-btn');
+    if (switchBtn) switchBtn.onclick = () => builderSetActive(i);
+    const nameSpan = b.querySelector('.build-ex-name');
+    if (nameSpan) nameSpan.onclick = () => builderStartEditEx(i);
+    b.querySelectorAll('.build-set-chip').forEach((chip, si) => {
+      chip.dataset.setIdx = si;
+      chip.onclick = e => { e.stopPropagation(); builderRemoveSet(i, si); };
+    });
+    // If this is now the active block, ensure it has the active footer
+    if (i === state.builder.activeIdx) {
+      const footer = b.querySelector('.build-ex-footer');
+      if (footer && !footer.classList.contains('build-set-input-row')) {
+        footer.replaceWith(makeActiveFooter());
+      }
+    }
+  });
+
+  if (state.builder.exercises.length === 0) {
+    document.getElementById('build-actions').style.display = 'none';
+  }
 }
 
 function builderStartEditEx(idx) {
-  builder.editingIdx = idx;
-  renderBuilder();
-  requestAnimationFrame(() => {
-    const i = document.getElementById('build-ex-edit');
-    if (i) { i.focus(); i.select(); }
-  });
+  state.builder.editingIdx = idx;
+  const block = document.querySelector(`[data-ex-idx="${idx}"]`);
+  const header = block.querySelector('.build-ex-header');
+  const nameSpan = header.querySelector('.build-ex-name');
+
+  const editInput = document.createElement('input');
+  editInput.id = 'build-ex-edit';
+  editInput.className = 'build-ex-edit';
+  editInput.value = state.builder.exercises[idx].name;
+  editInput.onkeydown = e => {
+    if (e.key === 'Enter') { e.preventDefault(); builderSaveExName(idx, true); }
+    else if (e.key === 'Escape') builderSaveExName(idx, false);
+  };
+  editInput.onblur = () => builderSaveExName(idx, true);
+  nameSpan.replaceWith(editInput);
+  requestAnimationFrame(() => { editInput.focus(); editInput.select(); });
 }
 
 function builderSaveExName(idx, commit) {
-  if (builder.editingIdx === -1) return;
+  if (state.builder.editingIdx === -1) return;
   const inp = document.getElementById('build-ex-edit');
-  if (commit && inp) {
+  if (!inp) return; // guard against double-call (blur fires after Enter)
+  if (commit) {
     const name = canon(inp.value.trim());
-    if (name) builder.exercises[idx].name = name;
+    if (name) state.builder.exercises[idx].name = name;
   }
-  builder.editingIdx = -1;
-  renderBuilder();
-  focusWeight();
+  state.builder.editingIdx = -1;
+
+  const block = document.querySelector(`[data-ex-idx="${idx}"]`);
+  const header = block.querySelector('.build-ex-header');
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'build-ex-name';
+  nameSpan.style.cursor = 'text';
+  nameSpan.title = 'tap to rename';
+  nameSpan.textContent = state.builder.exercises[idx].name;
+  nameSpan.onclick = () => builderStartEditEx(idx);
+  inp.replaceWith(nameSpan);
+
+  if (state.builder.activeIdx !== -1) focusWeight();
 }
 
-function renderBuilder() {
+function buildPreviewFromScratch() {
   const preview = document.getElementById('build-preview');
   const actions = document.getElementById('build-actions');
-  const sy = window.scrollY;
-  // blur first so the browser doesn't scroll-to-destroyed-input on innerHTML swap
-  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
-  window.scrollTo(0, sy);
-  if (builder.exercises.length === 0) {
+  if (state.builder.exercises.length === 0) {
     preview.innerHTML = '';
     actions.style.display = 'none';
-    window.scrollTo(0, sy);
     return;
   }
-  const unitLbl = settings.unit;
-  preview.innerHTML = builder.exercises.map((ex, exIdx) => {
-    const isActive = exIdx === builder.activeIdx;
-    const isEditing = exIdx === builder.editingIdx;
-    const chips = ex.sets.map((s, sIdx) =>
-      `<span class="build-set-chip" title="tap to remove"
-             onclick="event.stopPropagation();builderRemoveSet(${exIdx},${sIdx})">${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${unitLbl} × ${s.reps}</span>`
-    ).join('');
-    const nameEl = isEditing
-      ? `<input id="build-ex-edit" class="build-ex-edit" value="${esc(ex.name)}"
-           onkeydown="if(event.key==='Enter'){event.preventDefault();builderSaveExName(${exIdx},true)}else if(event.key==='Escape')builderSaveExName(${exIdx},false)"
-           onblur="builderSaveExName(${exIdx},true)" />`
-      : `<span class="build-ex-name" onclick="builderStartEditEx(${exIdx})" title="tap to rename" style="cursor:text">${esc(ex.name)}</span>`;
-    const footer = isActive
-      ? `<div class="build-set-input-row">
-          <input type="number" id="build-weight" class="build-input-sm" placeholder="${unitLbl}" step="2.5"
-                 onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
-          <span class="build-unit">${unitLbl}</span>
-          <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
-                 onkeydown="if(event.key==='Enter')builderAddSet()" />
-          <button class="build-add-btn" onclick="builderAddSet()">+ SET</button>
-        </div>`
-      : `<button class="build-switch-btn" onclick="builderSetActive(${exIdx})">+ ADD SETS</button>`;
-    return `<div class="build-ex-block${isActive ? ' active' : ''}">
-      <div class="build-ex-header">
-        ${nameEl}
-        <button class="build-ex-remove" onclick="builderRemoveEx(${exIdx})" title="remove">×</button>
-      </div>
-      <div class="build-set-chips">${chips}</div>
-      ${footer}
-    </div>`;
-  }).join('');
+  preview.innerHTML = '';
+  state.builder.exercises.forEach((ex, exIdx) => {
+    preview.appendChild(makeExBlock(
+      exIdx,
+      ex.name,
+      ex.sets,
+      exIdx === state.builder.activeIdx
+    ));
+  });
   actions.style.display = 'block';
-  window.scrollTo(0, sy);
 }
 
 function builderSave() {
   const isoVal = document.getElementById('build-date').value;
   if (!isoVal) { alert('Enter a date first.'); return; }
-  const withSets = builder.exercises.filter(e => e.sets.length > 0);
+  const withSets = state.builder.exercises.filter(e => e.sets.length > 0);
   if (withSets.length === 0) { alert('Add at least one set.'); return; }
   let text = `## ${isoVal}`;
   for (const ex of withSets) {
     text += `\n${ex.name}`;
     for (const s of ex.sets) text += `\n- ${s.assisted ? '-' : ''}${s.weight}# ${s.reps}`;
   }
-  rawText = rawText + '\n\n' + text;
-  document.getElementById('raw-log').value = rawText;
-  recompute();
-  save(rawText);
-  builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
+  setRawText(state.rawText + '\n\n' + text);
+  state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = new Date().toISOString().split('T')[0];
-  renderBuilder();
+  buildPreviewFromScratch();
   const msg = document.getElementById('build-save-msg');
   msg.classList.add('show');
   setTimeout(() => msg.classList.remove('show'), 2500);
 }
 
 function builderClear() {
-  builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
+  state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = '';
-  renderBuilder();
+  buildPreviewFromScratch();
 }
 
 // ── PRs TAB ───────────────────────────────────────────────────────────────────
+function updatePRWeights() {
+  document.querySelectorAll('#pr-list .pr-row').forEach(row => {
+    const ex = row.dataset.ex;
+    const pr = state.prs[ex];
+    if (!pr) return;
+    const wStr = pr.dual
+      ? `${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}`
+      : fmtWeight(pr.v);
+    // Update weight text node (text before the .pr-weight-unit span)
+    const weightEl = row.querySelector('.pr-weight');
+    weightEl.childNodes[0].textContent = wStr;
+    // Update unit label
+    row.querySelector('.pr-weight-unit').textContent = ' ' + settings.unit;
+    // Update meta line
+    row.querySelector('.pr-meta').textContent =
+      `${isoToDisplay(pr.date)} · ${state.volume[ex] || 0} sets`;
+  });
+}
+
 function renderPRs() {
   const list = document.getElementById('pr-list');
-  const exs = Object.keys(prs).sort();
-  const maxVol = Math.max(...Object.values(volume), 1);
+  const exs = Object.keys(state.prs).sort();
+  const maxVol = Math.max(...Object.values(state.volume), 1);
   list.innerHTML = exs.map(ex => {
-    const pr = prs[ex];
-    const vol = volume[ex] || 0;
+    const pr = state.prs[ex];
+    const vol = state.volume[ex] || 0;
     const pct = (vol / maxVol * 100).toFixed(1);
     const wStr = pr.dual ? `${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}` : `${fmtWeight(pr.v)}`;
     return `<div class="pr-row" data-ex="${esc(ex)}">
@@ -2048,14 +2246,11 @@ function renderPRs() {
       </div>
     </div>`;
   }).join('');
-  document.querySelectorAll('#pr-list .pr-row').forEach(row => {
-    row.addEventListener('click', () => goProgress(row.dataset.ex));
-  });
 }
 
 // ── PROGRESS TAB ──────────────────────────────────────────────────────────────
 function goProgress(ex) {
-  selectedEx = ex;
+  state.selectedEx = ex;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   const btn = document.querySelector('.tab-btn[aria-controls="panel-progress"]');
@@ -2066,17 +2261,30 @@ function goProgress(ex) {
   renderProgress();
 }
 
+function renderExButtons() {
+  const exs = Object.keys(state.prs).sort();
+  document.getElementById('ex-buttons').innerHTML = exs.map(ex =>
+    `<button class="ex-btn" type="button" data-ex="${esc(ex)}">${esc(ex)}</button>`
+  ).join('');
+  syncExButtonActive();
+}
+
+function syncExButtonActive() {
+  document.querySelectorAll('#ex-buttons .ex-btn').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.ex === state.selectedEx)
+  );
+}
+
 function renderProgress() {
-  const exs = Object.keys(prs).sort();
-  const btns = document.getElementById('ex-buttons');
-  btns.innerHTML = exs.map(ex => `<button class="ex-btn${ex === selectedEx ? ' active' : ''}" data-ex="${esc(ex)}">${esc(ex)}</button>`).join('');
-  document.querySelectorAll('#ex-buttons .ex-btn').forEach(btn => {
-    btn.addEventListener('click', () => selectEx(btn.dataset.ex));
-  });
+  renderExButtons();
   renderChart();
 }
 
-function selectEx(ex) { selectedEx = ex; renderProgress(); }
+function selectEx(ex) {
+  state.selectedEx = ex;
+  syncExButtonActive();
+  renderChart();
+}
 
 function renderChart() {
   const noData = document.getElementById('no-data');
@@ -2084,35 +2292,35 @@ function renderChart() {
   const setsList = document.getElementById('sets-list');
   const setsLabel = document.getElementById('sets-label');
 
-  if (!selectedEx) {
-    document.getElementById('progress-title').textContent = '';
-    document.getElementById('progress-sub').textContent = '';
-    noData.textContent = 'Pick an exercise above.';
+  if (!state.selectedEx) {
+    setText('progress-title', '');
+    setText('progress-sub', '');
+    setText('no-data', 'Pick an exercise above.');
     chartContainer.style.display = 'none';
     setsLabel.style.display = 'none';
     setsList.innerHTML = '';
     return;
   }
 
-  const data = computeProgress(sessions, selectedEx);
-  document.getElementById('progress-title').textContent = selectedEx;
+  const data = computeProgress(state.sessions, state.selectedEx);
+  setText('progress-title', state.selectedEx);
 
   if (data.length < 2) {
-    document.getElementById('progress-sub').textContent = '';
-    noData.textContent = data.length === 0 ? 'No data yet.' : 'Need at least 2 sessions to chart.';
+    setText('progress-sub', '');
+    setText('no-data', data.length === 0 ? 'No data yet.' : 'Need at least 2 sessions to chart.');
     chartContainer.style.display = 'none';
   } else {
-    noData.textContent = '';
+    setText('no-data', '');
     chartContainer.style.display = 'block';
-    document.getElementById('progress-sub').textContent = `Max weight per session (${settings.unit}) · ${data.length} data points`;
+    setText('progress-sub', `Max weight per session (${settings.unit}) · ${data.length} data points`);
     drawChart(data);
   }
 
-  const sessionsWithEx = sessions.filter(s => s.exercises[selectedEx]).sort((a, b) => compareDates(a.date, b.date));
+  const sessionsWithEx = state.sessions.filter(s => s.exercises[state.selectedEx]).sort((a, b) => compareDates(a.date, b.date));
   if (sessionsWithEx.length) {
     setsLabel.style.display = 'block';
     setsList.innerHTML = sessionsWithEx.map(s => {
-      const chips = s.exercises[selectedEx].map(set => {
+      const chips = s.exercises[state.selectedEx].map(set => {
         const wRaw = set.dual ? `${fmtWeight(set.v)}/${fmtWeight(set.v2)}` : `${set.assisted ? '-' : ''}${fmtWeight(set.v)}`;
         return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}</span>`;
       }).join('');
@@ -2218,8 +2426,8 @@ function drawChart(data) {
 
 // ── VOLUME TAB ────────────────────────────────────────────────────────────────
 function renderVolume() {
-  const maxVol = Math.max(...Object.values(volume), 1);
-  const sorted = Object.entries(volume).sort((a, b) => b[1] - a[1]);
+  const maxVol = Math.max(...Object.values(state.volume), 1);
+  const sorted = Object.entries(state.volume).sort((a, b) => b[1] - a[1]);
   document.getElementById('vol-list').innerHTML = sorted.map(([ex, count]) => {
     const pct = (count / maxVol * 100).toFixed(1);
     const low = count / maxVol < 0.35;
@@ -2231,9 +2439,6 @@ function renderVolume() {
       <div class="vol-track"><div class="vol-fill${low ? ' low' : ''}" style="width:${pct}%"></div></div>
     </div>`;
   }).join('');
-  document.querySelectorAll('#vol-list .vol-row').forEach(row => {
-    row.addEventListener('click', () => goProgress(row.dataset.ex));
-  });
 
   const low = sorted.filter(([, c]) => c / maxVol < 0.35).sort((a, b) => a[1] - b[1]);
   document.getElementById('attention-list').innerHTML = low.map(([ex, count]) =>
@@ -2244,10 +2449,27 @@ function renderVolume() {
 // ── INIT ──────────────────────────────────────────────────────────────────────
 loadSettings();
 applySettings();
-rawText = load() || DEFAULT_LOG;
-document.getElementById('raw-log').value = rawText;
+state.rawText = load() || DEFAULT_LOG;
+// Call setRawText's side effects manually here since we're initializing
+// (setRawText would also call save() which we don't want at init)
+document.getElementById('raw-log').value = state.rawText;
 recompute();
 renderPRs();
+
+document.getElementById('pr-list').addEventListener('click', e => {
+  const row = e.target.closest('.pr-row');
+  if (row && row.dataset.ex) goProgress(row.dataset.ex);
+});
+
+document.getElementById('vol-list').addEventListener('click', e => {
+  const row = e.target.closest('.vol-row');
+  if (row && row.dataset.ex) goProgress(row.dataset.ex);
+});
+
+document.getElementById('ex-buttons').addEventListener('click', e => {
+  const btn = e.target.closest('.ex-btn');
+  if (btn && btn.dataset.ex) selectEx(btn.dataset.ex);
+});
 </script>
 </body>
 </html>
