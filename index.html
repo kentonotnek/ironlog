@@ -1225,7 +1225,7 @@ body.light #build-date {
         <span id="add-msg">✓ Session saved</span>
       </div>
       <div id="full-log-label">Full log — edit directly if needed</div>
-      <textarea id="raw-log" oninput="onRawEdit()"></textarea>
+      <textarea id="raw-log" oninput="onRawEdit()" onblur="onRawBlur()"></textarea>
     </div>
 
     <!-- BUILD mode -->
@@ -1522,6 +1522,14 @@ function parseWeight(s) {
   return { dual: false, v: isNaN(val) ? 0 : val, assisted };
 }
 
+function isoFromParts(y, m, d) {
+  // Clamp the day into the target month instead of silently rolling over
+  // (e.g. "## 31" in a 30-day month becomes that month's last day, not next month's 1st)
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const clamped = Math.min(Math.max(d, 1), daysInMonth);
+  return `${y}-${String(m).padStart(2, '0')}-${String(clamped).padStart(2, '0')}`;
+}
+
 function normalizeDate(str) {
   str = str.trim();
   // Already ISO
@@ -1533,25 +1541,47 @@ function normalizeDate(str) {
     const mi = MONTHS.indexOf(dispMatch[1].toLowerCase());
     if (mi >= 0) {
       const y = dispMatch[3] ? parseInt(dispMatch[3]) : new Date().getFullYear();
-      const m = String(mi + 1).padStart(2, '0');
-      const d = String(parseInt(dispMatch[2])).padStart(2, '0');
-      return `${y}-${m}-${d}`;
+      return isoFromParts(y, mi + 1, parseInt(dispMatch[2]));
     }
   }
   // Bare integer: treat as day of current month
   const n = parseInt(str);
   if (!isNaN(n) && n >= 1 && n <= 31) {
     const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    const d = String(n).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return isoFromParts(now.getFullYear(), now.getMonth() + 1, n);
   }
-  return str; // fallback: return unchanged
+  // Fallback: only hand off to the platform date parser for strings that look
+  // like a date (contain letters, '/' or ','), so plain numbers/words aren't
+  // misinterpreted. Use local date parts, not toISOString's UTC day.
+  if (/[A-Za-z/,]/.test(str)) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) return isoFromParts(d.getFullYear(), d.getMonth() + 1, d.getDate());
+  }
+  return str; // truly unrecognized: return unchanged
+}
+
+// Rewrites any "## <date>" header in raw log text to its normalized ISO form,
+// so ambiguous formats (bare days, month names) are resolved once and persisted
+// instead of being re-resolved against the clock on every future parse.
+function normalizeRawLogDates(text) {
+  let changed = false;
+  const newText = text.split('\n').map(line => {
+    const m = line.match(/^(\s*##\s+)(.+?)\s*$/);
+    if (!m) return line;
+    const original = m[2].trim();
+    const normalized = normalizeDate(original);
+    if (normalized !== original && /^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+      changed = true;
+      return `${m[1]}${normalized}`;
+    }
+    return line;
+  }).join('\n');
+  return { text: newText, changed };
 }
 
 function parseSessions(text) {
   const sessions = [];
+  let skipped = 0;
   let date = null, ex = null;
   for (let line of text.split('\n')) {
     line = line.trim();
@@ -1569,24 +1599,27 @@ function parseSessions(text) {
       if (parts.length >= 2) {
         // Find weight token: the one containing '#'
         const wToken = parts.find(p => p.includes('#'));
-        // Find reps token: last token that is a plain integer (digits only)
+        // Find reps token: last token that's a plain integer or a rep range like "8-10"
         let repsToken = null;
         for (let i = parts.length - 1; i >= 0; i--) {
-          if (/^\d+$/.test(parts[i])) { repsToken = parts[i]; break; }
+          if (/^\d+(-\d+)?$/.test(parts[i])) { repsToken = parts[i]; break; }
         }
         if (wToken && repsToken) {
           const w = parseWeight(wToken);
-          const reps = parseInt(repsToken);
+          const reps = parseInt(repsToken); // rep ranges ("8-10") take the first number
           let sess = sessions.find(s => s.date === date);
           if (!sess) { sess = { date, exercises: {} }; sessions.push(sess); }
           if (!sess.exercises[ex]) sess.exercises[ex] = [];
           sess.exercises[ex].push({ ...w, reps: isNaN(reps) ? 10 : reps });
+        } else {
+          skipped++; // no '#' weight marker and/or no numeric reps — can't parse safely
         }
       }
       continue;
     }
     if (!line.startsWith('#') && !line.startsWith('-')) ex = canon(line.replace(/:$/, ''));
   }
+  sessions.skippedLines = skipped;
   return sessions;
 }
 
@@ -1628,7 +1661,13 @@ function computePRs(sessions) {
   for (const s of sessions) {
     for (const [ex, sets] of Object.entries(s.exercises)) {
       for (const set of sets) {
-        if (!set.assisted && (!prs[ex] || set.v > prs[ex].v)) {
+        const cur = prs[ex];
+        if (!set.assisted) {
+          // A real lift always beats an assisted placeholder or a smaller real lift
+          if (!cur || cur.assisted || set.v > cur.v) prs[ex] = { ...set, date: s.date };
+        } else if (!cur || (cur.assisted && set.v < cur.v)) {
+          // No real lift recorded yet — keep the exercise visible via its
+          // least-assisted set (smaller assist weight = closer to unassisted)
           prs[ex] = { ...set, date: s.date };
         }
       }
@@ -1650,10 +1689,18 @@ function computeVolume(sessions) {
 function computeProgress(sessions, ex) {
   return sessions
     .filter(s => s.exercises[ex])
-    .map(s => ({
-      date: s.date,
-      weight: s.exercises[ex].reduce((b, x) => x.v > b ? x.v : b, 0)
-    }))
+    .map(s => {
+      const sets = s.exercises[ex];
+      const real = sets.filter(x => !x.assisted);
+      // Prefer real lifts so an assisted set can't mask that day's true max;
+      // fall back to assisted sets only if the session has no real lift at all
+      const pool = real.length ? real : sets;
+      const weight = pool.reduce((b, x) => {
+        const v = x.dual ? Math.max(x.v, x.v2) : x.v;
+        return v > b ? v : b;
+      }, 0);
+      return { date: s.date, weight };
+    })
     .sort((a, b) => compareDates(a.date, b.date));
 }
 
@@ -1776,6 +1823,11 @@ function setUnit(u) {
     renderPRs();
   }
   if (state.selectedEx) renderChart();
+  // Builder chips/footer bake in settings.unit at creation time — rebuild them
+  // so labels stay accurate and builderAddSet doesn't silently misconvert input.
+  if (document.getElementById('build-mode').style.display !== 'none') {
+    buildPreviewFromScratch();
+  }
 }
 
 function fmtWeight(v) {
@@ -1802,9 +1854,14 @@ const state = {
 
 function setRawText(text) {
   state.rawText = text;
-  document.getElementById('raw-log').value = text;
+  if (document.getElementById('raw-log').value !== text) document.getElementById('raw-log').value = text;
   recompute();
   save(text);
+}
+
+function todayLocalISO() {
+  const now = new Date();
+  return isoFromParts(now.getFullYear(), now.getMonth() + 1, now.getDate());
 }
 
 function load() {
@@ -1827,7 +1884,9 @@ function recompute() {
   state.sessions = parseSessions(state.rawText);
   state.prs = computePRs(state.sessions);
   state.volume = computeVolume(state.sessions);
-  document.getElementById('subtitle').textContent = `${state.sessions.length} sessions · ${Object.keys(state.prs).length} exercises`;
+  const skipped = state.sessions.skippedLines || 0;
+  const skippedNote = skipped ? ` · ${skipped} line${skipped === 1 ? '' : 's'} need a # weight marker` : '';
+  document.getElementById('subtitle').textContent = `${state.sessions.length} sessions · ${Object.keys(state.prs).length} exercises${skippedNote}`;
 }
 
 // ── TABS ─────────────────────────────────────────────────────────────────────
@@ -1845,7 +1904,7 @@ function switchTab(name, btn) {
 
 // ── LOG TAB ───────────────────────────────────────────────────────────────────
 function addSession() {
-  const input = document.getElementById('log-input').value.trim();
+  const input = normalizeRawLogDates(document.getElementById('log-input').value.trim()).text;
   if (!input) return;
 
   // Check for duplicate dates
@@ -1857,7 +1916,8 @@ function addSession() {
     if (!confirm(`Session(s) for ${dateList} already exist. Add anyway?`)) return;
   }
 
-  setRawText(state.rawText + '\n\n' + input);
+  setRawText(state.rawText ? input + '\n\n' + state.rawText : input);
+  document.getElementById('raw-log').scrollTop = 0;
   document.getElementById('log-input').value = '';
   const msg = document.getElementById('add-msg');
   msg.classList.add('show');
@@ -1866,6 +1926,14 @@ function addSession() {
 
 function onRawEdit() {
   setRawText(document.getElementById('raw-log').value);
+}
+
+// Canonicalize any bare-day/display-format headers the user typed once they
+// leave the textarea, so they're pinned to ISO instead of being re-resolved
+// against the clock (and drifting) on every future load.
+function onRawBlur() {
+  const norm = normalizeRawLogDates(state.rawText);
+  if (norm.changed) setRawText(norm.text);
 }
 
 function exportLog() {
@@ -1888,7 +1956,7 @@ function setLogMode(mode) {
   if (!paste) {
     refreshBuilderSuggestions();
     const d = document.getElementById('build-date');
-    if (!d.value) d.value = new Date().toISOString().split('T')[0];
+    if (!d.value) d.value = todayLocalISO();
   }
 }
 
@@ -1984,34 +2052,34 @@ function builderAddExercise() {
 
   let idx = state.builder.exercises.findIndex(e => e.name === name);
   const isNew = idx === -1;
-  if (isNew) {
-    state.builder.exercises.push({ name, sets: [] });
-    idx = state.builder.exercises.length - 1;
+  inp.value = '';
+
+  if (!isNew) {
+    // Exercise already exists — let builderSetActive read the still-current
+    // activeIdx itself so it can correctly deactivate the previous block.
+    builderSetActive(idx);
+    return;
   }
+
+  state.builder.exercises.push({ name, sets: [] });
+  idx = state.builder.exercises.length - 1;
 
   const prevActive = state.builder.activeIdx;
   state.builder.activeIdx = idx;
   state.builder.editingIdx = -1;
-  inp.value = '';
 
-  if (isNew) {
-    // Deactivate the previously-active block's footer
-    if (prevActive !== -1) {
-      const prevBlock = document.querySelector(`[data-ex-idx="${prevActive}"]`);
-      if (prevBlock) {
-        prevBlock.classList.remove('active');
-        prevBlock.querySelector('.build-ex-footer').replaceWith(makeInactiveFooter(prevActive));
-      }
+  // Deactivate the previously-active block's footer
+  if (prevActive !== -1) {
+    const prevBlock = document.querySelector(`[data-ex-idx="${prevActive}"]`);
+    if (prevBlock) {
+      prevBlock.classList.remove('active');
+      prevBlock.querySelector('.build-ex-footer').replaceWith(makeInactiveFooter(prevActive));
     }
-    // Append the new block
-    const block = makeExBlock(idx, name, [], true);
-    document.getElementById('build-preview').appendChild(block);
-    document.getElementById('build-actions').style.display = 'block';
-  } else {
-    // Exercise already exists — just activate it
-    builderSetActive(idx);
-    return;
   }
+  // Append the new block
+  const block = makeExBlock(idx, name, [], true);
+  document.getElementById('build-preview').appendChild(block);
+  document.getElementById('build-actions').style.display = 'block';
 
   focusWeight();
 }
@@ -2077,6 +2145,12 @@ function builderRemoveSet(exIdx, setIdx) {
 }
 
 function builderRemoveEx(idx) {
+  const removingActive = idx === state.builder.activeIdx;
+  // Preserve any in-progress footer input, unless we're removing the active
+  // exercise itself (which naturally clears its own footer).
+  const weightVal = !removingActive ? (document.getElementById('build-weight')?.value || '') : '';
+  const repsVal = !removingActive ? (document.getElementById('build-reps')?.value || '') : '';
+
   state.builder.exercises.splice(idx, 1);
 
   // Recalculate active/editing indices
@@ -2088,36 +2162,13 @@ function builderRemoveEx(idx) {
   if (state.builder.editingIdx === idx) state.builder.editingIdx = -1;
   else if (state.builder.editingIdx > idx) state.builder.editingIdx--;
 
-  // Remove the block from DOM
-  const block = document.querySelector(`[data-ex-idx="${idx}"]`);
-  if (block) block.remove();
+  buildPreviewFromScratch();
 
-  // Re-index remaining blocks
-  const preview = document.getElementById('build-preview');
-  preview.querySelectorAll('.build-ex-block').forEach((b, i) => {
-    b.dataset.exIdx = i;
-    b.classList.toggle('active', i === state.builder.activeIdx);
-    const removeBtn = b.querySelector('.build-ex-remove');
-    if (removeBtn) removeBtn.onclick = () => builderRemoveEx(i);
-    const switchBtn = b.querySelector('.build-switch-btn');
-    if (switchBtn) switchBtn.onclick = () => builderSetActive(i);
-    const nameSpan = b.querySelector('.build-ex-name');
-    if (nameSpan) nameSpan.onclick = () => builderStartEditEx(i);
-    b.querySelectorAll('.build-set-chip').forEach((chip, si) => {
-      chip.dataset.setIdx = si;
-      chip.onclick = e => { e.stopPropagation(); builderRemoveSet(i, si); };
-    });
-    // If this is now the active block, ensure it has the active footer
-    if (i === state.builder.activeIdx) {
-      const footer = b.querySelector('.build-ex-footer');
-      if (footer && !footer.classList.contains('build-set-input-row')) {
-        footer.replaceWith(makeActiveFooter());
-      }
-    }
-  });
-
-  if (state.builder.exercises.length === 0) {
-    document.getElementById('build-actions').style.display = 'none';
+  if (weightVal || repsVal) {
+    const w = document.getElementById('build-weight');
+    const r = document.getElementById('build-reps');
+    if (w) w.value = weightVal;
+    if (r) r.value = repsVal;
   }
 }
 
@@ -2193,9 +2244,10 @@ function builderSave() {
     text += `\n${ex.name}`;
     for (const s of ex.sets) text += `\n- ${s.assisted ? '-' : ''}${s.weight}# ${s.reps}`;
   }
-  setRawText(state.rawText + '\n\n' + text);
+  setRawText(state.rawText ? text + '\n\n' + state.rawText : text);
+  document.getElementById('raw-log').scrollTop = 0;
   state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
-  document.getElementById('build-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('build-date').value = todayLocalISO();
   buildPreviewFromScratch();
   const msg = document.getElementById('build-save-msg');
   msg.classList.add('show');
@@ -2450,6 +2502,10 @@ function renderVolume() {
 loadSettings();
 applySettings();
 state.rawText = load() || DEFAULT_LOG;
+{
+  const norm = normalizeRawLogDates(state.rawText);
+  if (norm.changed) { state.rawText = norm.text; save(state.rawText); }
+}
 // Call setRawText's side effects manually here since we're initializing
 // (setRawText would also call save() which we don't want at init)
 document.getElementById('raw-log').value = state.rawText;
