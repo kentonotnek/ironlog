@@ -1232,7 +1232,7 @@ body.light #build-date {
     <div id="build-mode" style="display:none">
       <div class="build-section">
         <div class="build-label">DATE</div>
-        <input type="date" id="build-date" class="build-input" />
+        <input type="date" id="build-date" class="build-input" oninput="onBuildDateChange()" />
       </div>
       <div class="build-section">
         <div class="build-label">EXERCISE</div>
@@ -1351,6 +1351,7 @@ function setText(id, val) {
 // ── STORAGE ──────────────────────────────────────────────────────────────────
 const STORAGE_KEY = 'ironlog_v1';
 const SETTINGS_KEY = 'ironlog_settings';
+const BUILD_KEY = 'ironlog_builder';
 
 const DEFAULT_LOG = `## 5
 Dips
@@ -1880,6 +1881,24 @@ function save(text) {
   saveTimer = setTimeout(() => ind.classList.remove('show'), 1400);
 }
 
+// Persisted separately from rawText so an in-progress BUILD-mode session
+// survives the tab being reloaded (e.g. mobile OS reclaiming a backgrounded
+// tab when switching apps) instead of only living in memory.
+function saveBuilder() {
+  try { localStorage.setItem(BUILD_KEY, JSON.stringify(state.builder)); } catch(e) {}
+}
+
+function loadBuilder() {
+  try {
+    const s = localStorage.getItem(BUILD_KEY);
+    if (!s) return null;
+    const b = JSON.parse(s);
+    if (!b || !Array.isArray(b.exercises)) return null;
+    return b;
+  } catch(e) {}
+  return null;
+}
+
 function recompute() {
   state.sessions = parseSessions(state.rawText);
   state.prs = computePRs(state.sessions);
@@ -2081,6 +2100,7 @@ function builderAddExercise() {
   document.getElementById('build-preview').appendChild(block);
   document.getElementById('build-actions').style.display = 'block';
 
+  saveBuilder();
   focusWeight();
 }
 
@@ -2106,6 +2126,7 @@ function builderSetActive(idx) {
     }
   }
 
+  saveBuilder();
   focusWeight();
 }
 
@@ -2126,6 +2147,7 @@ function builderAddSet() {
 
   document.getElementById('build-weight').value = '';
   document.getElementById('build-reps').value = '';
+  saveBuilder();
   focusWeight();
 }
 
@@ -2141,6 +2163,7 @@ function builderRemoveSet(exIdx, setIdx) {
     chipsEl.appendChild(makeChipEl(exIdx, si, s))
   );
 
+  saveBuilder();
   if (exIdx === state.builder.activeIdx) focusWeight();
 }
 
@@ -2163,6 +2186,7 @@ function builderRemoveEx(idx) {
   else if (state.builder.editingIdx > idx) state.builder.editingIdx--;
 
   buildPreviewFromScratch();
+  saveBuilder();
 
   if (weightVal || repsVal) {
     const w = document.getElementById('build-weight');
@@ -2211,6 +2235,7 @@ function builderSaveExName(idx, commit) {
   nameSpan.onclick = () => builderStartEditEx(idx);
   inp.replaceWith(nameSpan);
 
+  saveBuilder();
   if (state.builder.activeIdx !== -1) focusWeight();
 }
 
@@ -2249,6 +2274,7 @@ function builderSave() {
   state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = todayLocalISO();
   buildPreviewFromScratch();
+  saveBuilder();
   const msg = document.getElementById('build-save-msg');
   msg.classList.add('show');
   setTimeout(() => msg.classList.remove('show'), 2500);
@@ -2258,6 +2284,12 @@ function builderClear() {
   state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
   document.getElementById('build-date').value = '';
   buildPreviewFromScratch();
+  saveBuilder();
+}
+
+function onBuildDateChange() {
+  state.builder.date = document.getElementById('build-date').value;
+  saveBuilder();
 }
 
 // ── PRs TAB ───────────────────────────────────────────────────────────────────
@@ -2511,6 +2543,25 @@ state.rawText = load() || DEFAULT_LOG;
 document.getElementById('raw-log').value = state.rawText;
 recompute();
 renderPRs();
+
+// Restore an in-progress BUILD-mode session (exercises/sets not yet saved)
+// so it survives the tab being reloaded, e.g. a mobile OS reclaiming a
+// backgrounded tab when the user switches apps.
+{
+  const savedBuilder = loadBuilder();
+  if (savedBuilder && savedBuilder.exercises.length > 0) {
+    state.builder = {
+      date: savedBuilder.date || '',
+      exercises: savedBuilder.exercises,
+      activeIdx: typeof savedBuilder.activeIdx === 'number' && savedBuilder.activeIdx < savedBuilder.exercises.length
+        ? savedBuilder.activeIdx : -1,
+      editingIdx: -1,
+    };
+    setLogMode('build');
+    if (state.builder.date) document.getElementById('build-date').value = state.builder.date;
+    buildPreviewFromScratch();
+  }
+}
 
 document.getElementById('pr-list').addEventListener('click', e => {
   const row = e.target.closest('.pr-row');
