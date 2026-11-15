@@ -541,6 +541,69 @@ canvas#chart {
   color: var(--accent);
 }
 
+.build-set-chips.group {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.build-set-chip.pending {
+  border-style: dashed;
+  color: #888;
+}
+
+.build-ex-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.build-link-btn {
+  background: none;
+  border: 1px dashed #333;
+  border-radius: 4px;
+  color: #888;
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 3px 6px;
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+.build-link-btn:active {
+  color: #bbb;
+  border-color: #555;
+}
+
+.build-group-footer {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #222;
+}
+
+.build-group-footer .build-set-input-row {
+  margin-top: 6px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.build-round-label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+
+.build-hint {
+  font-size: 10px;
+  line-height: 1.7;
+  color: #999;
+  margin-top: 6px;
+}
+
+.build-hint span {
+  color: var(--accent);
+}
+
 .build-unit {
   font-size: 11px;
   color: #999;
@@ -1104,6 +1167,28 @@ body.light .build-set-chip {
   color: #444;
 }
 
+body.light .build-set-chip.pending {
+  color: #777;
+}
+
+body.light .build-link-btn {
+  border-color: #d0d0d0;
+  color: #777;
+}
+
+body.light .build-group-footer {
+  border-color: #e0e0e0;
+}
+
+body.light .build-round-label,
+body.light .build-hint span {
+  color: #3a7000;
+}
+
+body.light .build-hint {
+  color: #666;
+}
+
 body.light .build-unit {
   color: #666;
 }
@@ -1217,7 +1302,8 @@ body.light #build-date {
     <!-- PASTE mode -->
     <div id="paste-mode">
       <p class="hint">Paste your session. Your existing format works as-is.<br>
-        <span>## Jun 27 2026</span> → date &nbsp;·&nbsp; <span>Exercise Name</span> → exercise &nbsp;·&nbsp; <span>- 70# 10</span> → set
+        <span>## Jun 27 2026</span> → date &nbsp;·&nbsp; <span>Exercise Name</span> → exercise &nbsp;·&nbsp; <span>- 70# 10</span> → set<br>
+        Back to back: <span>Dips + Pullups</span> then <span>- 45# 10 + 45# 8</span> per round &nbsp;·&nbsp; <span>x3</span> repeats a line &nbsp;·&nbsp; <span>bw 12</span> → bodyweight
       </p>
       <textarea id="log-input" placeholder="## 25&#10;Dips&#10;- 50# 10&#10;- 55# 8&#10;Lat Pulldown&#10;- 140# 10&#10;- 150# 10"></textarea>
       <div style="display:flex;align-items:center;margin-top:10px">
@@ -1238,10 +1324,11 @@ body.light #build-date {
         <div class="build-label">EXERCISE</div>
         <div class="build-row">
           <input type="text" id="build-ex-input" class="build-input" placeholder="e.g. Dips" list="build-ex-suggestions"
-                 onkeydown="if(event.key==='Enter')builderAddExercise()" />
+                 onkeydown="if(event.key==='Enter')builderAddExercise();else if(event.key==='Escape')setLinkMode(-1)" />
           <datalist id="build-ex-suggestions"></datalist>
-          <button type="button" class="build-add-btn" onclick="builderAddExercise()">+ ADD</button>
+          <button type="button" class="build-add-btn" id="build-ex-add-btn" onclick="builderAddExercise()">+ ADD</button>
         </div>
+        <div class="build-hint">Back to back? Type <span>Dips + Pullups</span>, or tap + LINK on an exercise. Leave weight empty for a bodyweight set.</div>
       </div>
       <div id="build-preview"></div>
       <div id="build-actions" style="display:none;margin-top:8px">
@@ -1583,45 +1670,77 @@ function normalizeRawLogDates(text) {
 function parseSessions(text) {
   const sessions = [];
   let skipped = 0;
-  let date = null, ex = null;
+  // exs is the current exercise heading: one name normally, several for a
+  // compound heading like "Dips + Pullups" (exercises done back to back).
+  let date = null, exs = null;
   for (let line of text.split('\n')) {
     line = line.trim();
     if (!line) continue;
     const dm = line.match(/^##\s+(.+)/);
     if (dm) {
       date = normalizeDate(dm[1].trim());
-      ex = null;
+      exs = null;
       continue;
     }
     if (!date) continue;
     const sm = line.match(/^-\s+(.+)/);
-    if (sm && ex) {
-      const parts = sm[1].trim().split(/\s+/);
-      if (parts.length >= 2) {
-        // Find weight token: the one containing '#'
-        const wToken = parts.find(p => p.includes('#'));
-        // Find reps token: last token that's a plain integer or a rep range like "8-10"
-        let repsToken = null;
-        for (let i = parts.length - 1; i >= 0; i--) {
-          if (/^\d+(-\d+)?$/.test(parts[i])) { repsToken = parts[i]; break; }
-        }
-        if (wToken && repsToken) {
-          const w = parseWeight(wToken);
-          const reps = parseInt(repsToken); // rep ranges ("8-10") take the first number
+    if (sm && exs) {
+      let body = sm[1].trim();
+      // Trailing "x3" repeats the whole line (one round) that many times
+      let repeat = 1;
+      const rm = body.match(/\s+x(\d+)$/i);
+      if (rm) {
+        repeat = Math.min(Math.max(parseInt(rm[1]), 1), MAX_LINE_REPEAT);
+        body = body.slice(0, rm.index).trim();
+      }
+      // Each " + " separated part belongs to the heading's exercise in the same position
+      const segs = body.split(COMPOUND_SEP);
+      if (segs.length === 1 && segs[0].split(/\s+/).length < 2 && !/^\d+(-\d+)?$/.test(segs[0])) continue;
+      const parsed = segs.map(parseSetSegment);
+      for (let n = 0; n < repeat; n++) {
+        parsed.forEach((set, i) => {
+          if (!set || i >= exs.length) return;
           let sess = sessions.find(s => s.date === date);
           if (!sess) { sess = { date, exercises: {} }; sessions.push(sess); }
-          if (!sess.exercises[ex]) sess.exercises[ex] = [];
-          sess.exercises[ex].push({ ...w, reps: isNaN(reps) ? 10 : reps });
-        } else {
-          skipped++; // no '#' weight marker and/or no numeric reps — can't parse safely
-        }
+          if (!sess.exercises[exs[i]]) sess.exercises[exs[i]] = [];
+          sess.exercises[exs[i]].push({ ...set });
+        });
       }
+      // Count each part that couldn't be read, or has no exercise to belong to
+      skipped += parsed.filter((set, i) => !set || i >= exs.length).length;
       continue;
     }
-    if (!line.startsWith('#') && !line.startsWith('-')) ex = canon(line.replace(/:$/, ''));
+    if (!line.startsWith('#') && !line.startsWith('-')) {
+      exs = line.replace(/:$/, '').split(COMPOUND_SEP).map(canon).filter(Boolean);
+      if (!exs.length) exs = null;
+    }
   }
   sessions.skippedLines = skipped;
   return sessions;
+}
+
+const COMPOUND_SEP = /\s+\+\s+/;
+const MAX_LINE_REPEAT = 50;
+
+// Parses one set ("45# 10", "wide 45# 10", "bw 12", "12") into a set object,
+// or null if it can't be read safely.
+function parseSetSegment(seg) {
+  const parts = seg.trim().split(/\s+/);
+  // Weight token: the one containing '#'
+  const wToken = parts.find(p => p.includes('#'));
+  // Reps token: last token that's a plain integer or a rep range like "8-10"
+  let repsToken = null;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (/^\d+(-\d+)?$/.test(parts[i])) { repsToken = parts[i]; break; }
+  }
+  if (!repsToken) return null;
+  const reps = parseInt(repsToken); // rep ranges ("8-10") take the first number
+  if (wToken) return { ...parseWeight(wToken), reps: isNaN(reps) ? 10 : reps };
+  // Bodyweight: an explicit "bw" marker, or reps on their own ("12")
+  if (parts.length === 1 || parts.some(p => /^bw$/i.test(p))) {
+    return { dual: false, v: 0, assisted: false, bw: true, reps: isNaN(reps) ? 10 : reps };
+  }
+  return null; // no '#' weight marker — can't tell weight from reps
 }
 
 const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -1665,7 +1784,8 @@ function computePRs(sessions) {
         const cur = prs[ex];
         if (!set.assisted) {
           // A real lift always beats an assisted placeholder or a smaller real lift
-          if (!cur || cur.assisted || set.v > cur.v) prs[ex] = { ...set, date: s.date };
+          // Bodyweight sets (v = 0) rank by reps among themselves; any weighted lift beats them
+          if (!cur || cur.assisted || set.v > cur.v || (set.bw && cur.bw && set.reps > cur.reps)) prs[ex] = { ...set, date: s.date };
         } else if (!cur || (cur.assisted && set.v < cur.v)) {
           // No real lift recorded yet — keep the exercise visible via its
           // least-assisted set (smaller assist weight = closer to unassisted)
@@ -1993,17 +2113,68 @@ function focusWeight() {
 }
 
 // ── BUILDER DOM HELPERS ───────────────────────────────────────────────────────
-function makeActiveFooter() {
-  const div = document.createElement('div');
-  div.className = 'build-set-input-row build-ex-footer';
-  div.innerHTML = `
+// A builder entry is either a single exercise { name, sets: [set] } or a
+// compound group { names: [..], rounds: [[set, ..]], cur: [set, ..] }: exercises
+// done back to back, where each round holds one set per exercise and cur is the
+// round being entered. A set is { weight, reps, assisted, bw }.
+let linkIdx = -1; // entry waiting for an exercise to be linked onto it (not persisted)
+
+function isGroup(e) { return Array.isArray(e.names); }
+function entryTitle(e) { return isGroup(e) ? e.names.join(' + ') : e.name; }
+function entryHasData(e) { return isGroup(e) ? e.rounds.length > 0 || e.cur.length > 0 : e.sets.length > 0; }
+function splitNames(text) { return text.trim().split(COMPOUND_SEP).map(canon).filter(Boolean); }
+function emptyEntry(names) { return names.length >= 2 ? { names, rounds: [], cur: [] } : { name: names[0], sets: [] }; }
+
+function fmtSetLabel(s) {
+  if (s.bw) return `BW × ${s.reps}`;
+  return `${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${settings.unit} × ${s.reps}`;
+}
+
+// A set as it is written into the log text
+function fmtSetText(s) {
+  return s.bw ? `bw ${s.reps}` : `${s.assisted ? '-' : ''}${s.weight}# ${s.reps}`;
+}
+
+function roundLabel(entry) {
+  const pos = entry.cur.length;
+  return `ROUND ${entry.rounds.length + 1} · ${entry.names[pos]} (${pos + 1} of ${entry.names.length})`;
+}
+
+function setInputRowHTML() {
+  return `
     <input type="number" id="build-weight" class="build-input-sm"
-           placeholder="${settings.unit}" step="2.5"
+           placeholder="${settings.unit}" step="2.5" title="leave empty for bodyweight"
            onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
     <span class="build-unit">${settings.unit}</span>
     <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
            onkeydown="if(event.key==='Enter')builderAddSet()" />
     <button type="button" class="build-add-btn" onclick="builderAddSet()">+ SET</button>`;
+}
+
+function makeActiveFooter(exIdx) {
+  const entry = state.builder.exercises[exIdx];
+  const div = document.createElement('div');
+  if (!isGroup(entry)) {
+    div.className = 'build-set-input-row build-ex-footer build-footer-active';
+    div.innerHTML = setInputRowHTML();
+    return div;
+  }
+  div.className = 'build-group-footer build-ex-footer build-footer-active';
+  const label = document.createElement('div');
+  label.className = 'build-round-label';
+  label.textContent = roundLabel(entry);
+  const row = document.createElement('div');
+  row.className = 'build-set-input-row';
+  row.innerHTML = setInputRowHTML();
+  const rep = document.createElement('button');
+  rep.type = 'button';
+  rep.className = 'build-switch-btn build-repeat-btn';
+  rep.textContent = '↻ REPEAT LAST ROUND';
+  rep.style.display = entry.rounds.length > 0 && entry.cur.length === 0 ? 'block' : 'none';
+  rep.onclick = () => builderRepeatRound(exIdx);
+  div.appendChild(label);
+  div.appendChild(row);
+  div.appendChild(rep);
   return div;
 }
 
@@ -2011,7 +2182,7 @@ function makeInactiveFooter(exIdx) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'build-switch-btn build-ex-footer';
-  btn.textContent = '+ ADD SETS';
+  btn.textContent = isGroup(state.builder.exercises[exIdx]) ? '+ ADD ROUNDS' : '+ ADD SETS';
   btn.onclick = () => builderSetActive(exIdx);
   return btn;
 }
@@ -2020,16 +2191,53 @@ function makeChipEl(exIdx, setIdx, s) {
   const chip = document.createElement('span');
   chip.className = 'build-set-chip';
   chip.title = 'tap to remove';
-  chip.dataset.setIdx = setIdx;
-  chip.textContent = `${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${settings.unit} × ${s.reps}`;
+  chip.textContent = fmtSetLabel(s);
   chip.onclick = e => {
     e.stopPropagation();
-    builderRemoveSet(exIdx, parseInt(chip.dataset.setIdx));
+    builderRemoveSet(exIdx, setIdx);
   };
   return chip;
 }
 
-function makeExBlock(exIdx, name, sets, isActive) {
+// One chip per round of a compound group; pending = the round still being entered
+function makeRoundChipEl(exIdx, roundIdx, round, pending) {
+  const chip = document.createElement('span');
+  chip.className = 'build-set-chip' + (pending ? ' pending' : '');
+  chip.title = pending ? 'tap to undo' : 'tap to remove';
+  chip.textContent = round.map(fmtSetLabel).join('  +  ') + (pending ? '  +  …' : '');
+  chip.onclick = e => {
+    e.stopPropagation();
+    if (pending) builderUndoPending(exIdx);
+    else builderRemoveSet(exIdx, roundIdx);
+  };
+  return chip;
+}
+
+// Chips are always rebuilt as a whole, so each chip's index stays correct
+function fillChips(chipsEl, exIdx) {
+  const entry = state.builder.exercises[exIdx];
+  chipsEl.innerHTML = '';
+  chipsEl.classList.toggle('group', isGroup(entry));
+  if (isGroup(entry)) {
+    entry.rounds.forEach((r, ri) => chipsEl.appendChild(makeRoundChipEl(exIdx, ri, r, false)));
+    if (entry.cur.length) chipsEl.appendChild(makeRoundChipEl(exIdx, -1, entry.cur, true));
+  } else {
+    entry.sets.forEach((s, si) => chipsEl.appendChild(makeChipEl(exIdx, si, s)));
+  }
+}
+
+function makeNameSpan(exIdx) {
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'build-ex-name';
+  nameSpan.style.cursor = 'text';
+  nameSpan.title = 'tap to rename';
+  nameSpan.textContent = entryTitle(state.builder.exercises[exIdx]);
+  nameSpan.onclick = () => builderStartEditEx(exIdx);
+  return nameSpan;
+}
+
+function makeExBlock(exIdx, isActive) {
+  const entry = state.builder.exercises[exIdx];
   const div = document.createElement('div');
   div.className = 'build-ex-block' + (isActive ? ' active' : '');
   div.dataset.exIdx = exIdx;
@@ -2037,12 +2245,19 @@ function makeExBlock(exIdx, name, sets, isActive) {
   const header = document.createElement('div');
   header.className = 'build-ex-header';
 
-  const nameSpan = document.createElement('span');
-  nameSpan.className = 'build-ex-name';
-  nameSpan.style.cursor = 'text';
-  nameSpan.title = 'tap to rename';
-  nameSpan.textContent = name;
-  nameSpan.onclick = () => builderStartEditEx(exIdx);
+  const tools = document.createElement('span');
+  tools.className = 'build-ex-tools';
+
+  // Linking is only offered before any sets are logged, since linked
+  // exercises are entered round by round
+  const linkBtn = document.createElement('button');
+  linkBtn.type = 'button';
+  linkBtn.className = 'build-link-btn';
+  linkBtn.dataset.linkIdx = exIdx;
+  linkBtn.title = 'add an exercise done back to back with this one';
+  linkBtn.textContent = linkIdx === exIdx ? 'CANCEL' : '+ LINK';
+  linkBtn.style.display = entryHasData(entry) ? 'none' : '';
+  linkBtn.onclick = () => builderToggleLink(exIdx);
 
   const removeBtn = document.createElement('button');
   removeBtn.type = 'button';
@@ -2051,37 +2266,96 @@ function makeExBlock(exIdx, name, sets, isActive) {
   removeBtn.textContent = '×';
   removeBtn.onclick = () => builderRemoveEx(exIdx);
 
-  header.appendChild(nameSpan);
-  header.appendChild(removeBtn);
+  tools.appendChild(linkBtn);
+  tools.appendChild(removeBtn);
+  header.appendChild(makeNameSpan(exIdx));
+  header.appendChild(tools);
 
   const chipsEl = document.createElement('div');
   chipsEl.className = 'build-set-chips';
-  sets.forEach((s, si) => chipsEl.appendChild(makeChipEl(exIdx, si, s)));
+  fillChips(chipsEl, exIdx);
 
   div.appendChild(header);
   div.appendChild(chipsEl);
-  div.appendChild(isActive ? makeActiveFooter() : makeInactiveFooter(exIdx));
+  div.appendChild(isActive ? makeActiveFooter(exIdx) : makeInactiveFooter(exIdx));
   return div;
+}
+
+// Replace one block wholesale (used when an entry changes kind). Blur and
+// restore scroll synchronously around the swap — see the scroll-jump note in CLAUDE.md.
+function rebuildBlock(idx) {
+  const old = document.querySelector(`[data-ex-idx="${idx}"]`);
+  if (!old) return;
+  const y = window.scrollY;
+  if (document.activeElement && old.contains(document.activeElement)) document.activeElement.blur();
+  window.scrollTo(0, y);
+  old.replaceWith(makeExBlock(idx, idx === state.builder.activeIdx));
+  window.scrollTo(0, y);
+}
+
+// Update a block's chips, round label and buttons in place. The weight/reps
+// inputs are left alone so the on-screen keyboard stays open between sets.
+function refreshBlock(exIdx) {
+  const entry = state.builder.exercises[exIdx];
+  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
+  if (!block) return;
+  fillChips(block.querySelector('.build-set-chips'), exIdx);
+  const link = block.querySelector('.build-link-btn');
+  if (link) link.style.display = entryHasData(entry) ? 'none' : '';
+  if (!isGroup(entry)) return;
+  const label = block.querySelector('.build-round-label');
+  if (label) label.textContent = roundLabel(entry);
+  const rep = block.querySelector('.build-repeat-btn');
+  if (rep) rep.style.display = entry.rounds.length > 0 && entry.cur.length === 0 ? 'block' : 'none';
+}
+
+function setLinkMode(idx) {
+  linkIdx = idx;
+  const entry = idx !== -1 ? state.builder.exercises[idx] : null;
+  document.getElementById('build-ex-input').placeholder =
+    entry ? `exercise to link with ${entryTitle(entry)}` : 'e.g. Dips';
+  document.getElementById('build-ex-add-btn').textContent = entry ? '+ LINK' : '+ ADD';
+  document.querySelectorAll('.build-link-btn').forEach(b => {
+    b.textContent = parseInt(b.dataset.linkIdx) === idx ? 'CANCEL' : '+ LINK';
+  });
+}
+
+function builderToggleLink(idx) {
+  setLinkMode(linkIdx === idx ? -1 : idx);
+  if (linkIdx !== -1) document.getElementById('build-ex-input').focus();
 }
 
 function builderAddExercise() {
   const inp = document.getElementById('build-ex-input');
-  const name = canon(inp.value.trim());
-  if (!name) return;
-
-  let idx = state.builder.exercises.findIndex(e => e.name === name);
-  const isNew = idx === -1;
+  const names = splitNames(inp.value);
+  if (!names.length) return;
   inp.value = '';
+  const list = state.builder.exercises;
 
-  if (!isNew) {
-    // Exercise already exists — let builderSetActive read the still-current
+  // Link mode: join the typed exercise(s) onto the waiting entry
+  if (linkIdx !== -1 && list[linkIdx] && !entryHasData(list[linkIdx])) {
+    const idx = linkIdx;
+    const target = list[idx];
+    list[idx] = emptyEntry((isGroup(target) ? target.names : [target.name]).concat(names));
+    setLinkMode(-1);
+    rebuildBlock(idx);
+    builderSetActive(idx);
+    return;
+  }
+  setLinkMode(-1);
+
+  let idx = names.length >= 2
+    ? list.findIndex(e => isGroup(e) && e.names.join('\n') === names.join('\n'))
+    : list.findIndex(e => !isGroup(e) && e.name === names[0]);
+  if (idx !== -1) {
+    // Entry already exists — let builderSetActive read the still-current
     // activeIdx itself so it can correctly deactivate the previous block.
     builderSetActive(idx);
     return;
   }
 
-  state.builder.exercises.push({ name, sets: [] });
-  idx = state.builder.exercises.length - 1;
+  list.push(emptyEntry(names));
+  idx = list.length - 1;
 
   const prevActive = state.builder.activeIdx;
   state.builder.activeIdx = idx;
@@ -2096,8 +2370,7 @@ function builderAddExercise() {
     }
   }
   // Append the new block
-  const block = makeExBlock(idx, name, [], true);
-  document.getElementById('build-preview').appendChild(block);
+  document.getElementById('build-preview').appendChild(makeExBlock(idx, true));
   document.getElementById('build-actions').style.display = 'block';
 
   saveBuilder();
@@ -2121,8 +2394,8 @@ function builderSetActive(idx) {
   if (newBlock) {
     newBlock.classList.add('active');
     const curFooter = newBlock.querySelector('.build-ex-footer');
-    if (curFooter && !curFooter.classList.contains('build-set-input-row')) {
-      curFooter.replaceWith(makeActiveFooter());
+    if (curFooter && !curFooter.classList.contains('build-footer-active')) {
+      curFooter.replaceWith(makeActiveFooter(idx));
     }
   }
 
@@ -2131,43 +2404,71 @@ function builderSetActive(idx) {
 }
 
 function builderAddSet() {
-  if (state.builder.activeIdx === -1) return;
-  const wInput = parseFloat(document.getElementById('build-weight').value);
-  const w = settings.unit === 'kg' ? wInput / 0.4536 : wInput;
-  const r = parseInt(document.getElementById('build-reps').value);
-  if (isNaN(w) || isNaN(r) || r <= 0) return;
-
   const exIdx = state.builder.activeIdx;
-  const setData = { weight: Math.abs(w), reps: r, assisted: w < 0 };
-  state.builder.exercises[exIdx].sets.push(setData);
-  const setIdx = state.builder.exercises[exIdx].sets.length - 1;
+  if (exIdx === -1) return;
+  const wEl = document.getElementById('build-weight');
+  const rEl = document.getElementById('build-reps');
+  const r = parseInt(rEl.value);
+  if (isNaN(r) || r <= 0) return;
 
-  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
-  block.querySelector('.build-set-chips').appendChild(makeChipEl(exIdx, setIdx, setData));
+  let setData;
+  if (wEl.value.trim() === '') {
+    // No weight entered: a bodyweight set
+    setData = { weight: 0, reps: r, assisted: false, bw: true };
+  } else {
+    const wInput = parseFloat(wEl.value);
+    if (isNaN(wInput)) return;
+    const w = settings.unit === 'kg' ? wInput / 0.4536 : wInput;
+    setData = { weight: Math.abs(w), reps: r, assisted: w < 0 };
+  }
 
-  document.getElementById('build-weight').value = '';
-  document.getElementById('build-reps').value = '';
+  const entry = state.builder.exercises[exIdx];
+  if (isGroup(entry)) {
+    // One set per linked exercise in turn; a full pass completes the round
+    entry.cur.push(setData);
+    if (entry.cur.length >= entry.names.length) {
+      entry.rounds.push(entry.cur);
+      entry.cur = [];
+    }
+  } else {
+    entry.sets.push(setData);
+  }
+  if (linkIdx === exIdx) setLinkMode(-1);
+  refreshBlock(exIdx);
+
+  wEl.value = '';
+  rEl.value = '';
   saveBuilder();
   focusWeight();
 }
 
+// Removes a set from a single exercise, or a whole round from a compound group
 function builderRemoveSet(exIdx, setIdx) {
-  state.builder.exercises[exIdx].sets.splice(setIdx, 1);
-
-  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
-  const chipsEl = block.querySelector('.build-set-chips');
-
-  // Rebuild chips for this exercise only (indices shifted)
-  chipsEl.innerHTML = '';
-  state.builder.exercises[exIdx].sets.forEach((s, si) =>
-    chipsEl.appendChild(makeChipEl(exIdx, si, s))
-  );
-
+  const entry = state.builder.exercises[exIdx];
+  (isGroup(entry) ? entry.rounds : entry.sets).splice(setIdx, 1);
+  refreshBlock(exIdx);
   saveBuilder();
   if (exIdx === state.builder.activeIdx) focusWeight();
 }
 
+// Takes back the last set of the round being entered
+function builderUndoPending(exIdx) {
+  state.builder.exercises[exIdx].cur.pop();
+  refreshBlock(exIdx);
+  saveBuilder();
+  if (exIdx === state.builder.activeIdx) focusWeight();
+}
+
+function builderRepeatRound(exIdx) {
+  const entry = state.builder.exercises[exIdx];
+  if (!entry.rounds.length || entry.cur.length) return;
+  entry.rounds.push(entry.rounds[entry.rounds.length - 1].map(s => ({ ...s })));
+  refreshBlock(exIdx);
+  saveBuilder();
+}
+
 function builderRemoveEx(idx) {
+  setLinkMode(-1);
   const removingActive = idx === state.builder.activeIdx;
   // Preserve any in-progress footer input, unless we're removing the active
   // exercise itself (which naturally clears its own footer).
@@ -2205,7 +2506,7 @@ function builderStartEditEx(idx) {
   const editInput = document.createElement('input');
   editInput.id = 'build-ex-edit';
   editInput.className = 'build-ex-edit';
-  editInput.value = state.builder.exercises[idx].name;
+  editInput.value = entryTitle(state.builder.exercises[idx]);
   editInput.onkeydown = e => {
     if (e.key === 'Enter') { e.preventDefault(); builderSaveExName(idx, true); }
     else if (e.key === 'Escape') builderSaveExName(idx, false);
@@ -2219,21 +2520,31 @@ function builderSaveExName(idx, commit) {
   if (state.builder.editingIdx === -1) return;
   const inp = document.getElementById('build-ex-edit');
   if (!inp) return; // guard against double-call (blur fires after Enter)
+  const list = state.builder.exercises;
+  const wasGroup = isGroup(list[idx]);
   if (commit) {
-    const name = canon(inp.value.trim());
-    if (name) state.builder.exercises[idx].name = name;
+    const names = splitNames(inp.value);
+    const entry = list[idx];
+    if (!entryHasData(entry)) {
+      // Nothing logged yet: the name alone decides single vs. compound
+      if (names.length) list[idx] = emptyEntry(names);
+    } else if (wasGroup) {
+      // Logged rounds hold one set per exercise, so the count has to stay the same
+      if (names.length === entry.names.length) entry.names = names;
+    } else if (names.length === 1) {
+      entry.name = names[0];
+    }
   }
   state.builder.editingIdx = -1;
 
-  const block = document.querySelector(`[data-ex-idx="${idx}"]`);
-  const header = block.querySelector('.build-ex-header');
-  const nameSpan = document.createElement('span');
-  nameSpan.className = 'build-ex-name';
-  nameSpan.style.cursor = 'text';
-  nameSpan.title = 'tap to rename';
-  nameSpan.textContent = state.builder.exercises[idx].name;
-  nameSpan.onclick = () => builderStartEditEx(idx);
-  inp.replaceWith(nameSpan);
+  if (isGroup(list[idx]) !== wasGroup) {
+    if (linkIdx === idx) setLinkMode(-1);
+    rebuildBlock(idx);
+  } else {
+    inp.replaceWith(makeNameSpan(idx));
+    refreshBlock(idx);
+    if (linkIdx === idx) setLinkMode(idx); // refresh the "link with …" prompt
+  }
 
   saveBuilder();
   if (state.builder.activeIdx !== -1) focusWeight();
@@ -2242,19 +2553,13 @@ function builderSaveExName(idx, commit) {
 function buildPreviewFromScratch() {
   const preview = document.getElementById('build-preview');
   const actions = document.getElementById('build-actions');
+  preview.innerHTML = '';
   if (state.builder.exercises.length === 0) {
-    preview.innerHTML = '';
     actions.style.display = 'none';
     return;
   }
-  preview.innerHTML = '';
   state.builder.exercises.forEach((ex, exIdx) => {
-    preview.appendChild(makeExBlock(
-      exIdx,
-      ex.name,
-      ex.sets,
-      exIdx === state.builder.activeIdx
-    ));
+    preview.appendChild(makeExBlock(exIdx, exIdx === state.builder.activeIdx));
   });
   actions.style.display = 'block';
 }
@@ -2262,16 +2567,23 @@ function buildPreviewFromScratch() {
 function builderSave() {
   const isoVal = document.getElementById('build-date').value;
   if (!isoVal) { alert('Enter a date first.'); return; }
-  const withSets = state.builder.exercises.filter(e => e.sets.length > 0);
+  const withSets = state.builder.exercises.filter(entryHasData);
   if (withSets.length === 0) { alert('Add at least one set.'); return; }
   let text = `## ${isoVal}`;
   for (const ex of withSets) {
-    text += `\n${ex.name}`;
-    for (const s of ex.sets) text += `\n- ${s.assisted ? '-' : ''}${s.weight}# ${s.reps}`;
+    text += `\n${entryTitle(ex)}`;
+    if (isGroup(ex)) {
+      // One line per round; an unfinished round is kept as a shorter line
+      const rounds = ex.cur.length ? ex.rounds.concat([ex.cur]) : ex.rounds;
+      for (const round of rounds) text += `\n- ${round.map(fmtSetText).join(' + ')}`;
+    } else {
+      for (const s of ex.sets) text += `\n- ${fmtSetText(s)}`;
+    }
   }
   setRawText(state.rawText ? text + '\n\n' + state.rawText : text);
   document.getElementById('raw-log').scrollTop = 0;
   state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
+  setLinkMode(-1);
   document.getElementById('build-date').value = todayLocalISO();
   buildPreviewFromScratch();
   saveBuilder();
@@ -2282,6 +2594,7 @@ function builderSave() {
 
 function builderClear() {
   state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
+  setLinkMode(-1);
   document.getElementById('build-date').value = '';
   buildPreviewFromScratch();
   saveBuilder();
@@ -2298,18 +2611,26 @@ function updatePRWeights() {
     const ex = row.dataset.ex;
     const pr = state.prs[ex];
     if (!pr) return;
-    const wStr = pr.dual
-      ? `${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}`
-      : fmtWeight(pr.v);
+    const wStr = prWeightText(pr);
     // Update weight text node (text before the .pr-weight-unit span)
     const weightEl = row.querySelector('.pr-weight');
     weightEl.childNodes[0].textContent = wStr;
     // Update unit label
-    row.querySelector('.pr-weight-unit').textContent = ' ' + settings.unit;
+    row.querySelector('.pr-weight-unit').textContent = prUnitText(pr);
     // Update meta line
     row.querySelector('.pr-meta').textContent =
       `${isoToDisplay(pr.date)} · ${state.volume[ex] || 0} sets`;
   });
+}
+
+// A bodyweight record shows as "BW × reps" instead of a weight and unit
+function prWeightText(pr) {
+  if (pr.bw) return 'BW';
+  return pr.dual ? `${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}` : fmtWeight(pr.v);
+}
+
+function prUnitText(pr) {
+  return pr.bw ? ` × ${pr.reps}` : ' ' + settings.unit;
 }
 
 function renderPRs() {
@@ -2320,12 +2641,12 @@ function renderPRs() {
     const pr = state.prs[ex];
     const vol = state.volume[ex] || 0;
     const pct = (vol / maxVol * 100).toFixed(1);
-    const wStr = pr.dual ? `${fmtWeight(pr.v)}/${fmtWeight(pr.v2)}` : `${fmtWeight(pr.v)}`;
+    const wStr = prWeightText(pr);
     return `<div class="pr-row" data-ex="${esc(ex)}">
       <div class="pr-bar" style="width:${pct}%"></div>
       <div class="pr-name">${esc(ex)}</div>
       <div class="pr-right">
-        <span class="pr-weight">${wStr}<span class="pr-weight-unit"> ${settings.unit}</span></span>
+        <span class="pr-weight">${wStr}<span class="pr-weight-unit">${prUnitText(pr)}</span></span>
         <div class="pr-meta">${esc(isoToDisplay(pr.date))} · ${vol} sets</div>
       </div>
     </div>`;
@@ -2405,6 +2726,7 @@ function renderChart() {
     setsLabel.style.display = 'block';
     setsList.innerHTML = sessionsWithEx.map(s => {
       const chips = s.exercises[state.selectedEx].map(set => {
+        if (set.bw) return `<span class="set-chip">BW × ${set.reps}</span>`;
         const wRaw = set.dual ? `${fmtWeight(set.v)}/${fmtWeight(set.v2)}` : `${set.assisted ? '-' : ''}${fmtWeight(set.v)}`;
         return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}</span>`;
       }).join('');
@@ -2552,7 +2874,11 @@ renderPRs();
   if (savedBuilder && savedBuilder.exercises.length > 0) {
     state.builder = {
       date: savedBuilder.date || '',
-      exercises: savedBuilder.exercises,
+      exercises: savedBuilder.exercises
+        .filter(e => e && (Array.isArray(e.names) ? e.names.length >= 2 : typeof e.name === 'string'))
+        .map(e => Array.isArray(e.names)
+          ? { names: e.names, rounds: Array.isArray(e.rounds) ? e.rounds : [], cur: Array.isArray(e.cur) ? e.cur : [] }
+          : { name: e.name, sets: Array.isArray(e.sets) ? e.sets : [] }),
       activeIdx: typeof savedBuilder.activeIdx === 'number' && savedBuilder.activeIdx < savedBuilder.exercises.length
         ? savedBuilder.activeIdx : -1,
       editingIdx: -1,
