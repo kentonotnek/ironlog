@@ -405,6 +405,57 @@ canvas#chart {
   font-weight: 700;
 }
 
+/* RECENT WORKOUTS */
+#recent-box {
+  margin-bottom: 14px;
+}
+
+#recent-toggle {
+  margin-top: 0;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+#recent-list {
+  margin-top: 8px;
+}
+
+.recent-session {
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  padding: 0 10px;
+}
+
+.recent-date {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #ccc;
+  padding: 9px 0;
+  cursor: pointer;
+}
+
+.recent-date span {
+  color: #888;
+}
+
+.recent-ex {
+  padding-bottom: 8px;
+}
+
+.recent-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #eee;
+}
+
+.recent-empty {
+  font-size: 11px;
+  color: #999;
+  padding: 4px 0;
+}
+
 /* BUILD FORM */
 .build-section {
   margin-bottom: 14px;
@@ -1118,6 +1169,27 @@ body.light .mode-btn.active {
   color: #fff;
 }
 
+body.light .recent-session {
+  background: #fff;
+  border-color: #d0d0d0;
+}
+
+body.light .recent-date {
+  color: #333;
+}
+
+body.light .recent-date span {
+  color: #777;
+}
+
+body.light .recent-name {
+  color: #111;
+}
+
+body.light .recent-empty {
+  color: #666;
+}
+
 body.light .build-label {
   color: #666;
 }
@@ -1303,12 +1375,12 @@ body.light #build-date {
   <!-- LOG -->
   <div id="panel-log" class="panel active" role="tabpanel">
     <div id="log-mode-toggle">
-      <button type="button" class="mode-btn active" id="mode-paste-btn" onclick="setLogMode('paste')">PASTE</button>
-      <button type="button" class="mode-btn" id="mode-build-btn" onclick="setLogMode('build')">BUILD</button>
+      <button type="button" class="mode-btn active" id="mode-build-btn" onclick="setLogMode('build')">BUILD</button>
+      <button type="button" class="mode-btn" id="mode-paste-btn" onclick="setLogMode('paste')">IMPORT</button>
     </div>
 
-    <!-- PASTE mode -->
-    <div id="paste-mode">
+    <!-- IMPORT mode (ids and code still call it "paste") -->
+    <div id="paste-mode" style="display:none">
       <p class="hint">Paste your session. Your existing format works as-is.<br>
         <span>## Jun 27 2026</span> → date &nbsp;·&nbsp; <span>Exercise Name</span> → exercise &nbsp;·&nbsp; <span>- 70# 10</span> → set<br>
         Back to back: <span>Dips + Pullups</span> then <span>- 45# 10 + 45# 8</span> per round &nbsp;·&nbsp; <span>x3</span> repeats a line &nbsp;·&nbsp; <span>bw 12</span> → bodyweight
@@ -1323,7 +1395,7 @@ body.light #build-date {
     </div>
 
     <!-- BUILD mode -->
-    <div id="build-mode" style="display:none">
+    <div id="build-mode">
       <div class="build-section">
         <div class="build-label">DATE</div>
         <input type="date" id="build-date" class="build-input" oninput="onBuildDateChange()" />
@@ -1337,6 +1409,10 @@ body.light #build-date {
           <button type="button" class="build-add-btn" id="build-ex-add-btn" onclick="builderAddExercise()">+ ADD</button>
         </div>
         <div class="build-hint">Back to back? Type <span>Dips + Pullups</span>, or tap + LINK on an exercise. Leave weight empty for a bodyweight set. Weight is filled in from last time.</div>
+      </div>
+      <div id="recent-box">
+        <button type="button" id="recent-toggle" class="build-switch-btn" aria-controls="recent-list" aria-expanded="false" onclick="toggleRecent()">▸ RECENT WORKOUTS</button>
+        <div id="recent-list" style="display:none"></div>
       </div>
       <div id="build-preview"></div>
       <div id="build-actions" style="display:none;margin-top:8px">
@@ -1680,7 +1756,9 @@ function parseSessions(text) {
   let skipped = 0;
   // exs is the current exercise heading: one name normally, several for a
   // compound heading like "Dips + Pullups" (exercises done back to back).
-  let date = null, exs = null;
+  // block is the current heading's entry in its session's blocks list, which keeps
+  // the session as written (order and back-to-back pairing) for the recent view.
+  let date = null, exs = null, block = null;
   for (let line of text.split('\n')) {
     line = line.trim();
     if (!line) continue;
@@ -1688,6 +1766,7 @@ function parseSessions(text) {
     if (dm) {
       date = normalizeDate(dm[1].trim());
       exs = null;
+      block = null;
       continue;
     }
     if (!date) continue;
@@ -1705,14 +1784,20 @@ function parseSessions(text) {
       const segs = body.split(COMPOUND_SEP);
       if (segs.length === 1 && segs[0].split(/\s+/).length < 2 && !/^\d+(-\d+)?$/.test(segs[0])) continue;
       const parsed = segs.map(parseSetSegment);
-      for (let n = 0; n < repeat; n++) {
-        parsed.forEach((set, i) => {
-          if (!set || i >= exs.length) return;
-          let sess = sessions.find(s => s.date === date);
-          if (!sess) { sess = { date, exercises: {} }; sessions.push(sess); }
-          if (!sess.exercises[exs[i]]) sess.exercises[exs[i]] = [];
-          sess.exercises[exs[i]].push({ ...set });
-        });
+      // One row per line: the set for each of the heading's exercises (null = none)
+      const row = exs.map((_, i) => parsed[i] || null);
+      if (row.some(Boolean)) {
+        let sess = sessions.find(s => s.date === date);
+        if (!sess) { sess = { date, exercises: {}, blocks: [] }; sessions.push(sess); }
+        if (!block) { block = { names: exs, rows: [] }; sess.blocks.push(block); }
+        for (let n = 0; n < repeat; n++) {
+          block.rows.push(row);
+          row.forEach((set, i) => {
+            if (!set) return;
+            if (!sess.exercises[exs[i]]) sess.exercises[exs[i]] = [];
+            sess.exercises[exs[i]].push({ ...set });
+          });
+        }
       }
       // Count each part that couldn't be read, or has no exercise to belong to
       skipped += parsed.filter((set, i) => !set || i >= exs.length).length;
@@ -1721,6 +1806,7 @@ function parseSessions(text) {
     if (!line.startsWith('#') && !line.startsWith('-')) {
       exs = line.replace(/:$/, '').split(COMPOUND_SEP).map(canon).filter(Boolean);
       if (!exs.length) exs = null;
+      block = null;
     }
   }
   sessions.skippedLines = skipped;
@@ -1952,6 +2038,7 @@ function setUnit(u) {
     renderPRs();
   }
   if (state.selectedEx) renderChart();
+  renderRecent();
   // Builder chips/footer bake in settings.unit at creation time — rebuild them
   // so labels stay accurate and builderAddSet doesn't silently misconvert input.
   if (document.getElementById('build-mode').style.display !== 'none') {
@@ -2034,6 +2121,7 @@ function recompute() {
   const skipped = state.sessions.skippedLines || 0;
   const skippedNote = skipped ? ` · ${skipped} line${skipped === 1 ? '' : 's'} need a # weight marker` : '';
   document.getElementById('subtitle').textContent = `${state.sessions.length} sessions · ${Object.keys(state.prs).length} exercises${skippedNote}`;
+  renderRecent();
 }
 
 // ── TABS ─────────────────────────────────────────────────────────────────────
@@ -2176,14 +2264,84 @@ function lastHintText(entry) {
   const last = lastLogged(nextSetSlot(entry).name);
   if (!last) return '';
   const MAX = 6;
-  const parts = last.sets.slice(0, MAX).map(x => {
-    if (x.bw) return `BW×${x.reps}`;
-    const w = x.dual ? `${fmtWeight(x.v)}/${fmtWeight(x.v2)}` : `${x.assisted ? '-' : ''}${fmtWeight(x.v)}`;
-    return `${w}×${x.reps}`;
-  });
+  const parts = last.sets.slice(0, MAX).map(fmtLoggedSet);
   const more = last.sets.length > MAX ? ' · …' : '';
   const unit = last.sets.some(x => !x.bw) ? ' ' + settings.unit : '';
   return `LAST · ${shortDate(last.date)}: ${parts.join(' · ')}${more}${unit}`;
+}
+
+// A logged set in compact form: "47×10", "-20×8", "40/35×12", "BW×20"
+function fmtLoggedSet(x) {
+  if (!x) return '—';
+  if (x.bw) return `BW×${x.reps}`;
+  const w = x.dual ? `${fmtWeight(x.v)}/${fmtWeight(x.v2)}` : `${x.assisted ? '-' : ''}${fmtWeight(x.v)}`;
+  return `${w}×${x.reps}`;
+}
+
+// ── RECENT WORKOUTS (shown inside BUILD mode) ────────────────────────────────
+const RECENT_KEY = 'ironlog_recent_open';
+const RECENT_STEP = 5;
+const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+let recentShown = RECENT_STEP;
+let recentOpen = false;
+try { recentOpen = localStorage.getItem(RECENT_KEY) === '1'; } catch(e) {}
+
+function toggleRecent() {
+  recentOpen = !recentOpen;
+  recentShown = RECENT_STEP;
+  try { localStorage.setItem(RECENT_KEY, recentOpen ? '1' : '0'); } catch(e) {}
+  renderRecent();
+}
+
+function showMoreRecent() {
+  recentShown += RECENT_STEP;
+  renderRecent();
+}
+
+function recentDateLabel(iso) {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso;
+  const day = DAYS_SHORT[new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3])).getDay()];
+  return `${day} · ${isoToDisplay(iso)}`;
+}
+
+// Past sessions, newest first, each one a fold-out; the newest starts open.
+// Sessions the user has opened stay open across re-renders.
+function renderRecent() {
+  const btn = document.getElementById('recent-toggle');
+  const list = document.getElementById('recent-list');
+  btn.textContent = `${recentOpen ? '▾' : '▸'} RECENT WORKOUTS`;
+  btn.setAttribute('aria-expanded', recentOpen ? 'true' : 'false');
+  list.style.display = recentOpen ? 'block' : 'none';
+  if (!recentOpen) { list.innerHTML = ''; return; }
+
+  const sorted = [...state.sessions].sort((a, b) => compareDates(b.date, a.date));
+  if (!sorted.length) {
+    list.innerHTML = '<div class="recent-empty">No workouts logged yet.</div>';
+    return;
+  }
+  const wasRendered = list.querySelector('.recent-session') !== null;
+  const openDates = new Set([...list.querySelectorAll('.recent-session[open]')].map(d => d.dataset.date));
+  const html = sorted.slice(0, recentShown).map((s, i) => {
+    const rows = s.blocks.map(b => {
+      const group = b.names.length > 1;
+      const chips = b.rows.map(r =>
+        `<span class="set-chip">${group ? r.map(fmtLoggedSet).join(' + ') : fmtLoggedSet(r[0])}</span>`
+      ).join('');
+      return `<div class="recent-ex"><div class="recent-name">${esc(b.names.join(' + '))}</div>${chips}</div>`;
+    }).join('');
+    const isOpen = wasRendered ? openDates.has(s.date) : i === 0;
+    const count = `${s.blocks.length} exercise${s.blocks.length === 1 ? '' : 's'}`;
+    return `<details class="recent-session" data-date="${esc(s.date)}"${isOpen ? ' open' : ''}>
+      <summary class="recent-date">${esc(recentDateLabel(s.date))} <span>· ${count} · ${settings.unit}</span></summary>
+      ${rows}
+    </details>`;
+  }).join('');
+  const left = sorted.length - recentShown;
+  const more = left > 0
+    ? `<button type="button" class="build-switch-btn" onclick="showMoreRecent()">SHOW OLDER (${left} more)</button>`
+    : '';
+  list.innerHTML = html + more;
 }
 
 // ── BUILDER DOM HELPERS ───────────────────────────────────────────────────────
@@ -2962,6 +3120,9 @@ state.rawText = load() || DEFAULT_LOG;
 document.getElementById('raw-log').value = state.rawText;
 recompute();
 renderPRs();
+
+// BUILD is the default mode: fill in today's date and the exercise suggestions
+setLogMode('build');
 
 // Restore an in-progress BUILD-mode session (exercises/sets not yet saved)
 // so it survives the tab being reloaded, e.g. a mobile OS reclaiming a
