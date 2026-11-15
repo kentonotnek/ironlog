@@ -575,16 +575,23 @@ canvas#chart {
   border-color: #555;
 }
 
-.build-group-footer {
+.build-active-footer {
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #222;
 }
 
-.build-group-footer .build-set-input-row {
+.build-active-footer .build-set-input-row {
   margin-top: 6px;
   padding-top: 0;
   border-top: none;
+}
+
+.build-last-hint {
+  font-size: 10px;
+  line-height: 1.6;
+  color: #999;
+  margin-top: 2px;
 }
 
 .build-round-label {
@@ -1176,7 +1183,7 @@ body.light .build-link-btn {
   color: #777;
 }
 
-body.light .build-group-footer {
+body.light .build-active-footer {
   border-color: #e0e0e0;
 }
 
@@ -1185,6 +1192,7 @@ body.light .build-hint span {
   color: #3a7000;
 }
 
+body.light .build-last-hint,
 body.light .build-hint {
   color: #666;
 }
@@ -1328,7 +1336,7 @@ body.light #build-date {
           <datalist id="build-ex-suggestions"></datalist>
           <button type="button" class="build-add-btn" id="build-ex-add-btn" onclick="builderAddExercise()">+ ADD</button>
         </div>
-        <div class="build-hint">Back to back? Type <span>Dips + Pullups</span>, or tap + LINK on an exercise. Leave weight empty for a bodyweight set.</div>
+        <div class="build-hint">Back to back? Type <span>Dips + Pullups</span>, or tap + LINK on an exercise. Leave weight empty for a bodyweight set. Weight is filled in from last time.</div>
       </div>
       <div id="build-preview"></div>
       <div id="build-actions" style="display:none;margin-top:8px">
@@ -2105,11 +2113,77 @@ function refreshBuilderSuggestions() {
     [...names].sort().map(n => `<option value="${esc(n)}">`).join('');
 }
 
+// Moves the cursor to the next thing to type: reps when the weight is already
+// filled in (see prefillWeight), otherwise the weight.
 function focusWeight() {
+  prefillWeight();
   requestAnimationFrame(() => {
     const w = document.getElementById('build-weight');
-    if (w) w.focus({ preventScroll: true });
+    const r = document.getElementById('build-reps');
+    const target = w && r && w.value !== '' && r.value === '' ? r : w;
+    if (target) target.focus({ preventScroll: true });
   });
+}
+
+// The most recent logged session containing an exercise, or null
+function lastLogged(name) {
+  let best = null;
+  for (const s of state.sessions) {
+    if (s.exercises[name] && (!best || compareDates(s.date, best.date) > 0)) best = s;
+  }
+  return best ? { date: best.date, sets: best.exercises[name] } : null;
+}
+
+// Which exercise and set number the active entry's inputs are about to record
+function nextSetSlot(entry) {
+  return isGroup(entry)
+    ? { name: entry.names[entry.cur.length], idx: entry.rounds.length, prev: entry.rounds.length ? entry.rounds[entry.rounds.length - 1][entry.cur.length] : null }
+    : { name: entry.name, idx: entry.sets.length, prev: entry.sets.length ? entry.sets[entry.sets.length - 1] : null };
+}
+
+// Best guess at the next set's weight as input text ('' = no guess): the
+// same-numbered set from the last time this exercise was logged (so a ramp like
+// 47/57/67 is followed), else the set just entered.
+function prefillValue(entry) {
+  const slot = nextSetSlot(entry);
+  const last = lastLogged(slot.name);
+  let lbs = null;
+  if (last && last.sets[slot.idx]) {
+    const ref = last.sets[slot.idx];
+    if (ref.bw) return '';
+    lbs = ref.assisted ? -ref.v : ref.v;
+  } else if (slot.prev) {
+    if (slot.prev.bw) return '';
+    lbs = slot.prev.assisted ? -slot.prev.weight : slot.prev.weight;
+  }
+  if (lbs === null) return '';
+  return settings.unit === 'kg' ? String(parseFloat((lbs * 0.4536).toFixed(1))) : String(parseFloat(lbs.toFixed(2)));
+}
+
+// Fills the weight box with the guess, unless the user has typed their own value
+function prefillWeight() {
+  const w = document.getElementById('build-weight');
+  const entry = state.builder.exercises[state.builder.activeIdx];
+  if (!w || !entry) return;
+  if (w.value !== '' && !w.dataset.prefilled) return;
+  w.value = prefillValue(entry);
+  if (w.value !== '') w.dataset.prefilled = '1';
+  else delete w.dataset.prefilled;
+}
+
+// "LAST · Nov 12: 47×10 · 57×10 · 67×10 lbs" for the exercise about to be entered
+function lastHintText(entry) {
+  const last = lastLogged(nextSetSlot(entry).name);
+  if (!last) return '';
+  const MAX = 6;
+  const parts = last.sets.slice(0, MAX).map(x => {
+    if (x.bw) return `BW×${x.reps}`;
+    const w = x.dual ? `${fmtWeight(x.v)}/${fmtWeight(x.v2)}` : `${x.assisted ? '-' : ''}${fmtWeight(x.v)}`;
+    return `${w}×${x.reps}`;
+  });
+  const more = last.sets.length > MAX ? ' · …' : '';
+  const unit = last.sets.some(x => !x.bw) ? ' ' + settings.unit : '';
+  return `LAST · ${shortDate(last.date)}: ${parts.join(' · ')}${more}${unit}`;
 }
 
 // ── BUILDER DOM HELPERS ───────────────────────────────────────────────────────
@@ -2144,6 +2218,7 @@ function setInputRowHTML() {
   return `
     <input type="number" id="build-weight" class="build-input-sm"
            placeholder="${settings.unit}" step="2.5" title="leave empty for bodyweight"
+           onfocus="this.select()" oninput="delete this.dataset.prefilled"
            onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
     <span class="build-unit">${settings.unit}</span>
     <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
@@ -2154,28 +2229,43 @@ function setInputRowHTML() {
 function makeActiveFooter(exIdx) {
   const entry = state.builder.exercises[exIdx];
   const div = document.createElement('div');
-  if (!isGroup(entry)) {
-    div.className = 'build-set-input-row build-ex-footer build-footer-active';
-    div.innerHTML = setInputRowHTML();
-    return div;
+  div.className = 'build-active-footer build-ex-footer build-footer-active';
+  if (isGroup(entry)) {
+    const label = document.createElement('div');
+    label.className = 'build-round-label';
+    div.appendChild(label);
   }
-  div.className = 'build-group-footer build-ex-footer build-footer-active';
-  const label = document.createElement('div');
-  label.className = 'build-round-label';
-  label.textContent = roundLabel(entry);
+  const last = document.createElement('div');
+  last.className = 'build-last-hint';
   const row = document.createElement('div');
   row.className = 'build-set-input-row';
   row.innerHTML = setInputRowHTML();
   const rep = document.createElement('button');
   rep.type = 'button';
   rep.className = 'build-switch-btn build-repeat-btn';
-  rep.textContent = '↻ REPEAT LAST ROUND';
-  rep.style.display = entry.rounds.length > 0 && entry.cur.length === 0 ? 'block' : 'none';
-  rep.onclick = () => builderRepeatRound(exIdx);
-  div.appendChild(label);
+  rep.textContent = isGroup(entry) ? '↻ REPEAT LAST ROUND' : '↻ REPEAT LAST SET';
+  rep.onclick = () => builderRepeatLast(exIdx);
+  div.appendChild(last);
   div.appendChild(row);
   div.appendChild(rep);
+  syncFooter(div, entry);
   return div;
+}
+
+// Brings an active footer's labels and repeat button in line with the entry
+function syncFooter(footer, entry) {
+  const label = footer.querySelector('.build-round-label');
+  if (label) label.textContent = roundLabel(entry);
+  const last = footer.querySelector('.build-last-hint');
+  if (last) {
+    last.textContent = lastHintText(entry);
+    last.style.display = last.textContent ? 'block' : 'none';
+  }
+  const rep = footer.querySelector('.build-repeat-btn');
+  if (rep) {
+    const canRepeat = isGroup(entry) ? entry.rounds.length > 0 && entry.cur.length === 0 : entry.sets.length > 0;
+    rep.style.display = canRepeat ? 'block' : 'none';
+  }
 }
 
 function makeInactiveFooter(exIdx) {
@@ -2302,11 +2392,8 @@ function refreshBlock(exIdx) {
   fillChips(block.querySelector('.build-set-chips'), exIdx);
   const link = block.querySelector('.build-link-btn');
   if (link) link.style.display = entryHasData(entry) ? 'none' : '';
-  if (!isGroup(entry)) return;
-  const label = block.querySelector('.build-round-label');
-  if (label) label.textContent = roundLabel(entry);
-  const rep = block.querySelector('.build-repeat-btn');
-  if (rep) rep.style.display = entry.rounds.length > 0 && entry.cur.length === 0 ? 'block' : 'none';
+  const footer = block.querySelector('.build-footer-active');
+  if (footer) syncFooter(footer, entry);
 }
 
 function setLinkMode(idx) {
@@ -2437,6 +2524,7 @@ function builderAddSet() {
   refreshBlock(exIdx);
 
   wEl.value = '';
+  delete wEl.dataset.prefilled;
   rEl.value = '';
   saveBuilder();
   focusWeight();
@@ -2459,12 +2547,20 @@ function builderUndoPending(exIdx) {
   if (exIdx === state.builder.activeIdx) focusWeight();
 }
 
-function builderRepeatRound(exIdx) {
+// Logs the last set again (single exercise) or the last round again (group).
+// Focus is left alone so a tap doesn't bounce the on-screen keyboard.
+function builderRepeatLast(exIdx) {
   const entry = state.builder.exercises[exIdx];
-  if (!entry.rounds.length || entry.cur.length) return;
-  entry.rounds.push(entry.rounds[entry.rounds.length - 1].map(s => ({ ...s })));
+  if (isGroup(entry)) {
+    if (!entry.rounds.length || entry.cur.length) return;
+    entry.rounds.push(entry.rounds[entry.rounds.length - 1].map(s => ({ ...s })));
+  } else {
+    if (!entry.sets.length) return;
+    entry.sets.push({ ...entry.sets[entry.sets.length - 1] });
+  }
   refreshBlock(exIdx);
   saveBuilder();
+  if (exIdx === state.builder.activeIdx) prefillWeight();
 }
 
 function builderRemoveEx(idx) {
@@ -2492,7 +2588,7 @@ function builderRemoveEx(idx) {
   if (weightVal || repsVal) {
     const w = document.getElementById('build-weight');
     const r = document.getElementById('build-reps');
-    if (w) w.value = weightVal;
+    if (w) { w.value = weightVal; delete w.dataset.prefilled; }
     if (r) r.value = repsVal;
   }
 }
@@ -2562,6 +2658,7 @@ function buildPreviewFromScratch() {
     preview.appendChild(makeExBlock(exIdx, exIdx === state.builder.activeIdx));
   });
   actions.style.display = 'block';
+  prefillWeight();
 }
 
 function builderSave() {
