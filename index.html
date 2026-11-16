@@ -405,6 +405,99 @@ canvas#chart {
   font-weight: 700;
 }
 
+/* TOAST */
+#toast {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  transform: translate(-50%, -160%);
+  background: var(--accent);
+  color: #000;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1.4;
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+  max-width: 90vw;
+  text-align: center;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.25s, opacity 0.25s;
+}
+
+#toast.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+/* NOTES */
+.build-note-input {
+  display: block;
+  width: 100%;
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #ccc;
+  font-size: 12px;
+  font-family: var(--font);
+  padding: 6px 8px;
+  margin-top: 8px;
+  outline: none;
+}
+
+.build-note-input:focus {
+  border-color: #555;
+}
+
+.recent-name-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.recent-note {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 11px;
+  font-style: italic;
+  font-family: var(--font);
+  line-height: 1.5;
+  padding: 1px 0 3px;
+  cursor: pointer;
+}
+
+.recent-note.empty {
+  width: auto;
+  flex-shrink: 0;
+  color: #777;
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 1px;
+}
+
+.recent-session > .recent-note {
+  padding-bottom: 8px;
+}
+
+.recent-session .build-note-input {
+  margin: 2px 0 8px;
+}
+
+.set-note {
+  font-size: 11px;
+  font-style: italic;
+  color: #aaa;
+  margin-top: 3px;
+}
+
 /* RECENT WORKOUTS */
 #recent-box {
   margin-bottom: 14px;
@@ -639,6 +732,7 @@ canvas#chart {
 }
 
 .build-last-hint {
+  white-space: pre-line;
   font-size: 10px;
   line-height: 1.6;
   color: #999;
@@ -1169,6 +1263,31 @@ body.light .mode-btn.active {
   color: #fff;
 }
 
+body.light #toast {
+  background: #3a7000;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+body.light .build-note-input {
+  background: #fff;
+  border-color: #d0d0d0;
+  color: #333;
+}
+
+body.light .build-note-input:focus {
+  border-color: #999;
+}
+
+body.light .recent-note,
+body.light .set-note {
+  color: #555;
+}
+
+body.light .recent-note.empty {
+  color: #888;
+}
+
 body.light .recent-session {
   background: #fff;
   border-color: #d0d0d0;
@@ -1383,7 +1502,7 @@ body.light #build-date {
     <div id="paste-mode" style="display:none">
       <p class="hint">Paste your session. Your existing format works as-is.<br>
         <span>## Jun 27 2026</span> → date &nbsp;·&nbsp; <span>Exercise Name</span> → exercise &nbsp;·&nbsp; <span>- 70# 10</span> → set<br>
-        Back to back: <span>Dips + Pullups</span> then <span>- 45# 10 + 45# 8</span> per round &nbsp;·&nbsp; <span>x3</span> repeats a line &nbsp;·&nbsp; <span>bw 12</span> → bodyweight
+        Back to back: <span>Dips + Pullups</span> then <span>- 45# 10 + 45# 8</span> per round &nbsp;·&nbsp; <span>x3</span> repeats a line &nbsp;·&nbsp; <span>bw 12</span> → bodyweight &nbsp;·&nbsp; <span>&gt; text</span> → note
       </p>
       <textarea id="log-input" placeholder="## 25&#10;Dips&#10;- 50# 10&#10;- 55# 8&#10;Lat Pulldown&#10;- 140# 10&#10;- 150# 10"></textarea>
       <div style="display:flex;align-items:center;margin-top:10px">
@@ -1403,7 +1522,7 @@ body.light #build-date {
       <div class="build-section">
         <div class="build-label">EXERCISE</div>
         <div class="build-row">
-          <input type="text" id="build-ex-input" class="build-input" placeholder="e.g. Dips" list="build-ex-suggestions"
+          <input type="text" id="build-ex-input" class="build-input" placeholder="e.g. Dips" list="build-ex-suggestions" oninput="saveBuilder()"
                  onkeydown="if(event.key==='Enter')builderAddExercise();else if(event.key==='Escape')setLinkMode(-1)" />
           <datalist id="build-ex-suggestions"></datalist>
           <button type="button" class="build-add-btn" id="build-ex-add-btn" onclick="builderAddExercise()">+ ADD</button>
@@ -1415,6 +1534,10 @@ body.light #build-date {
         <div id="recent-list" style="display:none"></div>
       </div>
       <div id="build-preview"></div>
+      <div class="build-section" style="margin-top:14px">
+        <div class="build-label">WORKOUT NOTES</div>
+        <input type="text" id="build-note" class="build-input" placeholder="optional — how it went" oninput="onBuildNoteChange()" />
+      </div>
       <div id="build-actions" style="display:none;margin-top:8px">
         <button type="button" id="build-save-btn" onclick="builderSave()">SAVE SESSION</button>
         <button type="button" id="build-clear-btn" onclick="builderClear()">CLEAR</button>
@@ -1454,6 +1577,8 @@ body.light #build-date {
 </div>
 
 <!-- SETTINGS DRAWER -->
+<div id="toast" role="status" aria-live="polite"></div>
+
 <div id="settings-overlay" onclick="closeSettings()"></div>
 <div id="settings-drawer">
   <div id="settings-header">
@@ -1758,18 +1883,42 @@ function parseSessions(text) {
   // compound heading like "Dips + Pullups" (exercises done back to back).
   // block is the current heading's entry in its session's blocks list, which keeps
   // the session as written (order and back-to-back pairing) for the recent view.
+  // Sessions and blocks remember their heading's line number, and the line
+  // numbers of their "> note" lines, so a note can be edited in place later.
   let date = null, exs = null, block = null;
+  let li = -1, dateLine = -1, exLine = -1;
+  const getSess = () => {
+    let sess = sessions.find(s => s.date === date);
+    if (!sess) { sess = { date, exercises: {}, blocks: [], line: dateLine, note: '', noteLines: [] }; sessions.push(sess); }
+    return sess;
+  };
+  const getBlock = () => {
+    if (!block) { block = { names: exs, rows: [], line: exLine, note: '', noteLines: [] }; getSess().blocks.push(block); }
+    return block;
+  };
   for (let line of text.split('\n')) {
+    li++;
     line = line.trim();
     if (!line) continue;
     const dm = line.match(/^##\s+(.+)/);
     if (dm) {
       date = normalizeDate(dm[1].trim());
+      dateLine = li;
       exs = null;
       block = null;
       continue;
     }
     if (!date) continue;
+    // "> text" is a note: about the workout if it comes before any exercise,
+    // otherwise about the exercise it sits under
+    const nm = line.match(/^>\s*(.*)$/);
+    if (nm) {
+      const target = exs ? getBlock() : getSess();
+      const t = nm[1].trim();
+      if (t) target.note = target.note ? target.note + ' ' + t : t;
+      target.noteLines.push(li);
+      continue;
+    }
     const sm = line.match(/^-\s+(.+)/);
     if (sm && exs) {
       let body = sm[1].trim();
@@ -1787,9 +1936,8 @@ function parseSessions(text) {
       // One row per line: the set for each of the heading's exercises (null = none)
       const row = exs.map((_, i) => parsed[i] || null);
       if (row.some(Boolean)) {
-        let sess = sessions.find(s => s.date === date);
-        if (!sess) { sess = { date, exercises: {}, blocks: [] }; sessions.push(sess); }
-        if (!block) { block = { names: exs, rows: [] }; sess.blocks.push(block); }
+        const sess = getSess();
+        getBlock();
         for (let n = 0; n < repeat; n++) {
           block.rows.push(row);
           row.forEach((set, i) => {
@@ -1806,6 +1954,7 @@ function parseSessions(text) {
     if (!line.startsWith('#') && !line.startsWith('-')) {
       exs = line.replace(/:$/, '').split(COMPOUND_SEP).map(canon).filter(Boolean);
       if (!exs.length) exs = null;
+      exLine = li;
       block = null;
     }
   }
@@ -1870,21 +2019,22 @@ function shortDate(d) {
   return (parts.length >= 2 && isNaN(parseInt(parts[0]))) ? `${parts[0]} ${parts[1]}` : d;
 }
 
+// True when a set beats the current record for its exercise (cur may be undefined).
+// A real lift beats an assisted placeholder or a smaller real lift; bodyweight
+// sets (v = 0) rank by reps among themselves and any weighted lift beats them.
+// With no real lift yet, the least-assisted set stands in (smaller assist = closer
+// to unassisted) so the exercise stays visible.
+function beatsRecord(set, cur) {
+  if (!set.assisted) return !cur || !!cur.assisted || set.v > cur.v || (!!set.bw && !!cur.bw && set.reps > cur.reps);
+  return !cur || (!!cur.assisted && set.v < cur.v);
+}
+
 function computePRs(sessions) {
   const prs = {};
   for (const s of sessions) {
     for (const [ex, sets] of Object.entries(s.exercises)) {
       for (const set of sets) {
-        const cur = prs[ex];
-        if (!set.assisted) {
-          // A real lift always beats an assisted placeholder or a smaller real lift
-          // Bodyweight sets (v = 0) rank by reps among themselves; any weighted lift beats them
-          if (!cur || cur.assisted || set.v > cur.v || (set.bw && cur.bw && set.reps > cur.reps)) prs[ex] = { ...set, date: s.date };
-        } else if (!cur || (cur.assisted && set.v < cur.v)) {
-          // No real lift recorded yet — keep the exercise visible via its
-          // least-assisted set (smaller assist weight = closer to unassisted)
-          prs[ex] = { ...set, date: s.date };
-        }
+        if (beatsRecord(set, prs[ex])) prs[ex] = { ...set, date: s.date };
       }
     }
   }
@@ -2065,6 +2215,7 @@ const state = {
     exercises: [],
     activeIdx: -1,
     editingIdx: -1,
+    note: '',
   },
 };
 
@@ -2100,7 +2251,20 @@ function save(text) {
 // survives the tab being reloaded (e.g. mobile OS reclaiming a backgrounded
 // tab when switching apps) instead of only living in memory.
 function saveBuilder() {
-  try { localStorage.setItem(BUILD_KEY, JSON.stringify(state.builder)); } catch(e) {}
+  const b = state.builder;
+  // Once a workout is under way its date is pinned, so a reload after midnight doesn't move it
+  const dateEl = document.getElementById('build-date');
+  if (b.exercises.length > 0 && dateEl && dateEl.value) b.date = dateEl.value;
+  // Anything typed but not yet added (a guessed weight is not something the user typed)
+  const ex = document.getElementById('build-ex-input');
+  const w = document.getElementById('build-weight');
+  const r = document.getElementById('build-reps');
+  b.draft = {
+    ex: ex ? ex.value : '',
+    weight: w && !w.dataset.prefilled ? w.value : '',
+    reps: r ? r.value : '',
+  };
+  try { localStorage.setItem(BUILD_KEY, JSON.stringify(b)); } catch(e) {}
 }
 
 function loadBuilder() {
@@ -2151,7 +2315,11 @@ function addSession() {
     if (!confirm(`Session(s) for ${dateList} already exist. Add anyway?`)) return;
   }
 
+  const before = state.prs;
   setRawText(state.rawText ? input + '\n\n' + state.rawText : input);
+  // Records beaten by the imported session(s); brand-new exercises are not announced
+  const beaten = Object.keys(state.prs).filter(ex => before[ex] && beatsRecord(state.prs[ex], before[ex]));
+  if (beaten.length) showToast(`🏆 NEW PR! ${beaten.join(', ')}`);
   document.getElementById('raw-log').scrollTop = 0;
   document.getElementById('log-input').value = '';
   const msg = document.getElementById('add-msg');
@@ -2219,7 +2387,9 @@ function lastLogged(name) {
   for (const s of state.sessions) {
     if (s.exercises[name] && (!best || compareDates(s.date, best.date) > 0)) best = s;
   }
-  return best ? { date: best.date, sets: best.exercises[name] } : null;
+  if (!best) return null;
+  const note = best.blocks.filter(b => b.note && b.names.includes(name)).map(b => b.note).join(' · ');
+  return { date: best.date, sets: best.exercises[name], note };
 }
 
 // Which exercise and set number the active entry's inputs are about to record
@@ -2267,7 +2437,108 @@ function lastHintText(entry) {
   const parts = last.sets.slice(0, MAX).map(fmtLoggedSet);
   const more = last.sets.length > MAX ? ' · …' : '';
   const unit = last.sets.some(x => !x.bw) ? ' ' + settings.unit : '';
-  return `LAST · ${shortDate(last.date)}: ${parts.join(' · ')}${more}${unit}`;
+  return `LAST · ${shortDate(last.date)}: ${parts.join(' · ')}${more}${unit}${last.note ? `\n“${last.note}”` : ''}`;
+}
+
+// ── NOTES ─────────────────────────────────────────────────────────────────────
+function cleanNote(text) { return String(text || '').replace(/\s+/g, ' ').trim(); }
+
+// Sets (or, with empty text, removes) the note under a logged date or exercise
+// heading. target is a session or block from state.sessions, whose line numbers
+// refer to the current state.rawText.
+function setLoggedNote(target, text) {
+  const clean = cleanNote(text);
+  const drop = new Set(target.noteLines);
+  const out = [];
+  state.rawText.split('\n').forEach((l, i) => {
+    if (drop.has(i)) return;
+    out.push(l);
+    if (i === target.line && clean) out.push('> ' + clean);
+  });
+  setRawText(out.join('\n'));
+}
+
+function recentNoteTarget(date, blockIdx) {
+  const sess = state.sessions.find(s => s.date === date);
+  if (!sess) return null;
+  return blockIdx < 0 ? sess : sess.blocks[blockIdx] || null;
+}
+
+// Swaps a note (or "+ note") button in the recent list for a text box.
+// Enter or leaving the box saves; Escape cancels; saving it empty removes the note.
+function startRecentNoteEdit(btn) {
+  const target = recentNoteTarget(btn.dataset.date, parseInt(btn.dataset.block));
+  if (!target) return;
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.className = 'build-note-input';
+  inp.value = target.note;
+  inp.placeholder = 'note — leave empty to remove';
+  let done = false;
+  const finish = commit => {
+    if (done) return;
+    done = true;
+    const y = window.scrollY;
+    if (commit && cleanNote(inp.value) !== target.note) setLoggedNote(target, inp.value); // re-renders the list
+    else renderRecent();
+    window.scrollTo(0, y);
+  };
+  inp.onkeydown = e => {
+    if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    else if (e.key === 'Escape') finish(false);
+  };
+  inp.onblur = () => finish(true);
+  btn.replaceWith(inp);
+  inp.focus();
+}
+
+function onBuildNoteChange() {
+  state.builder.note = document.getElementById('build-note').value;
+  saveBuilder();
+}
+
+// Keeps an entry's note when the entry is rebuilt as a different kind
+function carryNote(from, to) {
+  to.note = from.note || '';
+  to.noteOpen = !!from.noteOpen;
+  return to;
+}
+
+function builderOpenNote(exIdx) {
+  state.builder.exercises[exIdx].noteOpen = true;
+  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
+  block.querySelector('.build-note-btn').style.display = 'none';
+  const inp = block.querySelector('.build-note-input');
+  inp.style.display = 'block';
+  inp.focus();
+  saveBuilder();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer = null;
+
+function showToast(text) {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Would this builder set be a new personal record? Compared against the saved
+// log plus everything already entered in this workout. The first time an
+// exercise is ever logged is not announced: there is no record to beat.
+function builderSetIsPR(name, s) {
+  let best = state.prs[name];
+  if (!best) return false;
+  const asLogged = x => ({ dual: false, v: x.weight, assisted: !!x.assisted, bw: !!x.bw, reps: x.reps });
+  for (const e of state.builder.exercises) {
+    const sets = isGroup(e)
+      ? e.rounds.concat([e.cur]).flatMap(r => r.filter((_, i) => e.names[i] === name))
+      : (e.name === name ? e.sets : []);
+    for (const x of sets) if (beatsRecord(asLogged(x), best)) best = asLogged(x);
+  }
+  return beatsRecord(asLogged(s), best);
 }
 
 // A logged set in compact form: "47×10", "-20×8", "40/35×12", "BW×20"
@@ -2322,18 +2593,25 @@ function renderRecent() {
   }
   const wasRendered = list.querySelector('.recent-session') !== null;
   const openDates = new Set([...list.querySelectorAll('.recent-session[open]')].map(d => d.dataset.date));
+  // A note shows as a tappable line; with no note, a small "+ note" button takes its place
+  const noteBtn = (s, bi, note, addLabel) =>
+    `<button type="button" class="recent-note${note ? '' : ' empty'}" data-date="${esc(s.date)}" data-block="${bi}">${note ? esc(note) : addLabel}</button>`;
   const html = sorted.slice(0, recentShown).map((s, i) => {
-    const rows = s.blocks.map(b => {
+    const rows = s.blocks.map((b, bi) => {
       const group = b.names.length > 1;
       const chips = b.rows.map(r =>
         `<span class="set-chip">${group ? r.map(fmtLoggedSet).join(' + ') : fmtLoggedSet(r[0])}</span>`
       ).join('');
-      return `<div class="recent-ex"><div class="recent-name">${esc(b.names.join(' + '))}</div>${chips}</div>`;
+      return `<div class="recent-ex">
+        <div class="recent-name-row"><span class="recent-name">${esc(b.names.join(' + '))}</span>${b.note ? '' : noteBtn(s, bi, '', '+ NOTE')}</div>
+        ${b.note ? noteBtn(s, bi, b.note, '') : ''}${chips}
+      </div>`;
     }).join('');
     const isOpen = wasRendered ? openDates.has(s.date) : i === 0;
     const count = `${s.blocks.length} exercise${s.blocks.length === 1 ? '' : 's'}`;
     return `<details class="recent-session" data-date="${esc(s.date)}"${isOpen ? ' open' : ''}>
       <summary class="recent-date">${esc(recentDateLabel(s.date))} <span>· ${count} · ${settings.unit}</span></summary>
+      ${noteBtn(s, -1, s.note, '+ WORKOUT NOTE')}
       ${rows}
     </details>`;
   }).join('');
@@ -2376,10 +2654,10 @@ function setInputRowHTML() {
   return `
     <input type="number" id="build-weight" class="build-input-sm"
            placeholder="${settings.unit}" step="2.5" title="leave empty for bodyweight"
-           onfocus="this.select()" oninput="delete this.dataset.prefilled"
+           onfocus="this.select()" oninput="delete this.dataset.prefilled;saveBuilder()"
            onkeydown="if(event.key==='Enter')document.getElementById('build-reps').focus()" />
     <span class="build-unit">${settings.unit}</span>
-    <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1"
+    <input type="number" id="build-reps" class="build-input-sm" placeholder="reps" min="1" oninput="saveBuilder()"
            onkeydown="if(event.key==='Enter')builderAddSet()" />
     <button type="button" class="build-add-btn" onclick="builderAddSet()">+ SET</button>`;
 }
@@ -2496,11 +2774,20 @@ function makeExBlock(exIdx, isActive) {
   const tools = document.createElement('span');
   tools.className = 'build-ex-tools';
 
+  const noteShown = !!(entry.note || entry.noteOpen);
+  const noteBtn = document.createElement('button');
+  noteBtn.type = 'button';
+  noteBtn.className = 'build-link-btn build-note-btn';
+  noteBtn.title = 'add a note about this exercise';
+  noteBtn.textContent = '+ NOTE';
+  noteBtn.style.display = noteShown ? 'none' : '';
+  noteBtn.onclick = () => builderOpenNote(exIdx);
+
   // Linking is only offered before any sets are logged, since linked
   // exercises are entered round by round
   const linkBtn = document.createElement('button');
   linkBtn.type = 'button';
-  linkBtn.className = 'build-link-btn';
+  linkBtn.className = 'build-link-btn build-linker-btn';
   linkBtn.dataset.linkIdx = exIdx;
   linkBtn.title = 'add an exercise done back to back with this one';
   linkBtn.textContent = linkIdx === exIdx ? 'CANCEL' : '+ LINK';
@@ -2514,6 +2801,7 @@ function makeExBlock(exIdx, isActive) {
   removeBtn.textContent = '×';
   removeBtn.onclick = () => builderRemoveEx(exIdx);
 
+  tools.appendChild(noteBtn);
   tools.appendChild(linkBtn);
   tools.appendChild(removeBtn);
   header.appendChild(makeNameSpan(exIdx));
@@ -2523,8 +2811,17 @@ function makeExBlock(exIdx, isActive) {
   chipsEl.className = 'build-set-chips';
   fillChips(chipsEl, exIdx);
 
+  const noteInp = document.createElement('input');
+  noteInp.type = 'text';
+  noteInp.className = 'build-note-input';
+  noteInp.placeholder = 'note for this exercise';
+  noteInp.value = entry.note || '';
+  noteInp.style.display = noteShown ? 'block' : 'none';
+  noteInp.oninput = () => { state.builder.exercises[exIdx].note = noteInp.value; saveBuilder(); };
+
   div.appendChild(header);
   div.appendChild(chipsEl);
+  div.appendChild(noteInp);
   div.appendChild(isActive ? makeActiveFooter(exIdx) : makeInactiveFooter(exIdx));
   return div;
 }
@@ -2548,7 +2845,7 @@ function refreshBlock(exIdx) {
   const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
   if (!block) return;
   fillChips(block.querySelector('.build-set-chips'), exIdx);
-  const link = block.querySelector('.build-link-btn');
+  const link = block.querySelector('.build-linker-btn');
   if (link) link.style.display = entryHasData(entry) ? 'none' : '';
   const footer = block.querySelector('.build-footer-active');
   if (footer) syncFooter(footer, entry);
@@ -2560,7 +2857,7 @@ function setLinkMode(idx) {
   document.getElementById('build-ex-input').placeholder =
     entry ? `exercise to link with ${entryTitle(entry)}` : 'e.g. Dips';
   document.getElementById('build-ex-add-btn').textContent = entry ? '+ LINK' : '+ ADD';
-  document.querySelectorAll('.build-link-btn').forEach(b => {
+  document.querySelectorAll('.build-linker-btn').forEach(b => {
     b.textContent = parseInt(b.dataset.linkIdx) === idx ? 'CANCEL' : '+ LINK';
   });
 }
@@ -2581,7 +2878,7 @@ function builderAddExercise() {
   if (linkIdx !== -1 && list[linkIdx] && !entryHasData(list[linkIdx])) {
     const idx = linkIdx;
     const target = list[idx];
-    list[idx] = emptyEntry((isGroup(target) ? target.names : [target.name]).concat(names));
+    list[idx] = carryNote(target, emptyEntry((isGroup(target) ? target.names : [target.name]).concat(names)));
     setLinkMode(-1);
     rebuildBlock(idx);
     builderSetActive(idx);
@@ -2668,6 +2965,8 @@ function builderAddSet() {
   }
 
   const entry = state.builder.exercises[exIdx];
+  const exName = isGroup(entry) ? entry.names[entry.cur.length] : entry.name;
+  const isPR = builderSetIsPR(exName, setData); // checked before the set joins the entry
   if (isGroup(entry)) {
     // One set per linked exercise in turn; a full pass completes the round
     entry.cur.push(setData);
@@ -2680,6 +2979,7 @@ function builderAddSet() {
   }
   if (linkIdx === exIdx) setLinkMode(-1);
   refreshBlock(exIdx);
+  if (isPR) showToast(`🏆 NEW PR! ${exName} · ${fmtSetLabel(setData)}`);
 
   wEl.value = '';
   delete wEl.dataset.prefilled;
@@ -2781,7 +3081,7 @@ function builderSaveExName(idx, commit) {
     const entry = list[idx];
     if (!entryHasData(entry)) {
       // Nothing logged yet: the name alone decides single vs. compound
-      if (names.length) list[idx] = emptyEntry(names);
+      if (names.length) list[idx] = carryNote(entry, emptyEntry(names));
     } else if (wasGroup) {
       // Logged rounds hold one set per exercise, so the count has to stay the same
       if (names.length === entry.names.length) entry.names = names;
@@ -2822,11 +3122,14 @@ function buildPreviewFromScratch() {
 function builderSave() {
   const isoVal = document.getElementById('build-date').value;
   if (!isoVal) { alert('Enter a date first.'); return; }
-  const withSets = state.builder.exercises.filter(entryHasData);
-  if (withSets.length === 0) { alert('Add at least one set.'); return; }
+  // An exercise with a note but no sets is still worth keeping ("skipped — sore knee")
+  const kept = state.builder.exercises.filter(e => entryHasData(e) || cleanNote(e.note));
+  if (kept.length === 0) { alert('Add at least one set.'); return; }
   let text = `## ${isoVal}`;
-  for (const ex of withSets) {
+  if (cleanNote(state.builder.note)) text += `\n> ${cleanNote(state.builder.note)}`;
+  for (const ex of kept) {
     text += `\n${entryTitle(ex)}`;
+    if (cleanNote(ex.note)) text += `\n> ${cleanNote(ex.note)}`;
     if (isGroup(ex)) {
       // One line per round; an unfinished round is kept as a shorter line
       const rounds = ex.cur.length ? ex.rounds.concat([ex.cur]) : ex.rounds;
@@ -2837,20 +3140,21 @@ function builderSave() {
   }
   setRawText(state.rawText ? text + '\n\n' + state.rawText : text);
   document.getElementById('raw-log').scrollTop = 0;
-  state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
-  setLinkMode(-1);
-  document.getElementById('build-date').value = todayLocalISO();
-  buildPreviewFromScratch();
-  saveBuilder();
+  resetBuilder(todayLocalISO());
   const msg = document.getElementById('build-save-msg');
   msg.classList.add('show');
   setTimeout(() => msg.classList.remove('show'), 2500);
 }
 
 function builderClear() {
-  state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1 };
+  resetBuilder('');
+}
+
+function resetBuilder(dateValue) {
+  state.builder = { date: '', exercises: [], activeIdx: -1, editingIdx: -1, note: '' };
   setLinkMode(-1);
-  document.getElementById('build-date').value = '';
+  document.getElementById('build-date').value = dateValue;
+  document.getElementById('build-note').value = '';
   buildPreviewFromScratch();
   saveBuilder();
 }
@@ -2985,7 +3289,9 @@ function renderChart() {
         const wRaw = set.dual ? `${fmtWeight(set.v)}/${fmtWeight(set.v2)}` : `${set.assisted ? '-' : ''}${fmtWeight(set.v)}`;
         return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}</span>`;
       }).join('');
-      return `<div class="set-day"><div class="set-date">${esc(isoToDisplay(s.date))}</div>${chips}</div>`;
+      const notes = s.blocks.filter(b => b.note && b.names.includes(state.selectedEx))
+        .map(b => `<div class="set-note">${esc(b.note)}</div>`).join('');
+      return `<div class="set-day"><div class="set-date">${esc(isoToDisplay(s.date))}</div>${chips}${notes}</div>`;
     }).join('');
   } else {
     setsLabel.style.display = 'none';
@@ -3129,23 +3435,40 @@ setLogMode('build');
 // backgrounded tab when the user switches apps.
 {
   const savedBuilder = loadBuilder();
-  if (savedBuilder && savedBuilder.exercises.length > 0) {
+  const draft = savedBuilder && savedBuilder.draft && typeof savedBuilder.draft === 'object' ? savedBuilder.draft : {};
+  const str = v => typeof v === 'string' ? v : '';
+  if (savedBuilder && (savedBuilder.exercises.length > 0 || str(draft.ex) || str(savedBuilder.note))) {
+    const exercises = savedBuilder.exercises
+      .filter(e => e && (Array.isArray(e.names) ? e.names.length >= 2 : typeof e.name === 'string'))
+      .map(e => Object.assign(Array.isArray(e.names)
+        ? { names: e.names, rounds: Array.isArray(e.rounds) ? e.rounds : [], cur: Array.isArray(e.cur) ? e.cur : [] }
+        : { name: e.name, sets: Array.isArray(e.sets) ? e.sets : [] },
+        { note: str(e.note), noteOpen: !!e.noteOpen }));
     state.builder = {
       date: savedBuilder.date || '',
-      exercises: savedBuilder.exercises
-        .filter(e => e && (Array.isArray(e.names) ? e.names.length >= 2 : typeof e.name === 'string'))
-        .map(e => Array.isArray(e.names)
-          ? { names: e.names, rounds: Array.isArray(e.rounds) ? e.rounds : [], cur: Array.isArray(e.cur) ? e.cur : [] }
-          : { name: e.name, sets: Array.isArray(e.sets) ? e.sets : [] }),
-      activeIdx: typeof savedBuilder.activeIdx === 'number' && savedBuilder.activeIdx < savedBuilder.exercises.length
+      exercises,
+      activeIdx: typeof savedBuilder.activeIdx === 'number' && savedBuilder.activeIdx < exercises.length
         ? savedBuilder.activeIdx : -1,
       editingIdx: -1,
+      note: str(savedBuilder.note),
     };
     setLogMode('build');
-    if (state.builder.date) document.getElementById('build-date').value = state.builder.date;
+    if (state.builder.date && exercises.length > 0) document.getElementById('build-date').value = state.builder.date;
+    document.getElementById('build-note').value = state.builder.note;
     buildPreviewFromScratch();
+    // Put back anything that was typed but not yet added
+    document.getElementById('build-ex-input').value = str(draft.ex);
+    const w = document.getElementById('build-weight');
+    const r = document.getElementById('build-reps');
+    if (w && str(draft.weight)) { w.value = draft.weight; delete w.dataset.prefilled; }
+    if (r && str(draft.reps)) r.value = draft.reps;
   }
 }
+
+document.getElementById('recent-list').addEventListener('click', e => {
+  const btn = e.target.closest('.recent-note');
+  if (btn) startRecentNoteEdit(btn);
+});
 
 document.getElementById('pr-list').addEventListener('click', e => {
   const row = e.target.closest('.pr-row');
