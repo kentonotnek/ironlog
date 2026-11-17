@@ -80,14 +80,21 @@
     // Reload: saved builder state comes back with a guess in place
     buildPreviewFromScratch();
     eq('rebuild keeps one footer with a guess', [document.querySelectorAll('#build-weight').length, W().value], [1, '57']);
+
+    // The app moves the cursor on the browser's next frame. Run that step at once
+    // here, so the check does not depend on frame timing (which differs in CI).
+    const realRaf = window.requestAnimationFrame;
+    window.requestAnimationFrame = fn => { fn(); return 0; };
+    focusWeight();
+    eq('cursor lands on reps when weight is filled', document.activeElement && document.activeElement.id, 'build-reps');
+    addEx('Never Logged Before');
+    eq('cursor lands on weight when there is no guess', [W().value, document.activeElement && document.activeElement.id], ['', 'build-weight']);
+    window.requestAnimationFrame = realRaf;
   } catch (e) {
     fails++;
     out.push('EXCEPTION ' + e.message + '\n' + e.stack);
   }
-  setTimeout(() => {
-    eq('cursor lands on reps when weight is filled', document.activeElement && document.activeElement.id, 'build-reps');
-    if (window.__errs.length) { fails++; out.push('PAGE ERRORS ' + JSON.stringify(window.__errs)); }
-    out.push(fails ? 'RESULT: ' + fails + ' FAILED' : 'RESULT: ALL PASSED');
-    document.getElementById('test-out').textContent = '\n@@START\n' + out.join('\n') + '\n@@END\n';
-  }, 600);
+  if (window.__errs.length) { fails++; out.push('PAGE ERRORS ' + JSON.stringify(window.__errs)); }
+  out.push(fails ? 'RESULT: ' + fails + ' FAILED' : 'RESULT: ALL PASSED');
+  document.getElementById('test-out').textContent = '\n@@START\n' + out.join('\n') + '\n@@END\n';
 })();

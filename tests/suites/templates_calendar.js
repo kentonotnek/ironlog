@@ -20,6 +20,7 @@
   todayLocalISO = () => '2026-11-16';
   let T = new Date(2026, 10, 16, 9, 0, 0).getTime();
   clockNow = () => T;
+  calInit(); // the calendar picked its month and day at start-up, from the real date
 
   try {
     builderClear();

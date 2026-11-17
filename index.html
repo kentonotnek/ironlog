@@ -4284,7 +4284,7 @@ function restoreFromText(text) {
   const sessions = parseSessions(normalizeRawLogDates(d.log).text).length;
   const now = `Your current data (${countLabel(state.sessions.length, 'workout')}) will be replaced. A safety copy is kept, so you can go back.`;
   const msg = res.kind === 'full'
-    ? `Restore this backup${res.exportedAt ? ' from ' + isoToDisplay(res.exportedAt.slice(0, 10)) : ''}?\n\n` +
+    ? `Restore this backup${res.exportedAt ? ' from ' + fmtStampDay(res.exportedAt) : ''}?\n\n` +
       `It has ${countLabel(sessions, 'workout')}, ${countLabel(cleanEntriesCount(d.templates), 'template')} and ${countLabel(d.plan.length, 'planned workout')}.\n\n${now}`
     : `Restore this workout log?\n\nIt has ${countLabel(sessions, 'workout')}. Your templates and planned workouts are not affected.\n\n${now}`;
   if (!confirm(msg)) return false;
@@ -4338,6 +4338,13 @@ function restoreSnapshot(at) {
   showToast(`Went back to ${fmtWhen(snap.at)}`);
 }
 
+// A saved timestamp as a date on this device's clock ("Nov 16 2026"), not in UTC
+function fmtStampDay(isoStamp) {
+  const d = new Date(isoStamp);
+  if (isNaN(d.getTime())) return String(isoStamp).slice(0, 10);
+  return isoToDisplay(isoFromParts(d.getFullYear(), d.getMonth() + 1, d.getDate()));
+}
+
 function fmtWhen(ms) {
   const d = new Date(ms);
   const h = d.getHours();
@@ -4364,7 +4371,7 @@ function renderData() {
   const last = Store.get(LAST_BACKUP_KEY);
   const lines = [
     `${countLabel(state.sessions.length, 'workout')} · ${countLabel(templates.length, 'template')} · ${plan.length} planned`,
-    last ? `Last backup: ${isoToDisplay(last.slice(0, 10))}` : 'Last backup: never. A backup file is the only copy outside this device.',
+    last ? `Last backup: ${fmtStampDay(last)}` : 'Last backup: never. A backup file is the only copy outside this device.',
   ];
   if (Store.failing()) lines.push('⚠ Changes are NOT being saved: storage is full or blocked. Back up now.');
   else if (storagePersisted === true) lines.push('Storage: protected from automatic clearing.');
