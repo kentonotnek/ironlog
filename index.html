@@ -89,6 +89,10 @@ textarea {
   opacity: 1;
 }
 
+#save-indicator.error {
+  color: #ff6b6b;
+}
+
 #export-btn {
   background: none;
   border: 1px solid #2a2a2a;
@@ -433,6 +437,39 @@ canvas#chart {
 #toast.show {
   transform: translate(-50%, 0);
   opacity: 1;
+}
+
+/* YOUR DATA (settings) */
+.data-status {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.data-status .warn {
+  color: #ff6b6b;
+}
+
+.snap-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid #262626;
+  font-size: 11px;
+  color: #ccc;
+}
+
+.snap-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.snap-sub {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #888;
 }
 
 /* TEMPLATES */
@@ -1698,6 +1735,24 @@ body.light .mode-btn.active {
   color: #fff;
 }
 
+body.light .data-status {
+  color: #666;
+}
+
+body.light .data-status .warn,
+body.light #save-indicator.error {
+  color: #c62828;
+}
+
+body.light .snap-row {
+  border-color: #e0e0e0;
+  color: #333;
+}
+
+body.light .snap-sub {
+  color: #777;
+}
+
 body.light .tpl-row {
   border-color: #e0e0e0;
 }
@@ -2036,7 +2091,7 @@ body.light #build-date {
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="save-indicator">SAVED ✓</span>
-    <button type="button" id="export-btn" aria-label="Export workout log" onclick="exportLog()">EXPORT</button>
+    <button type="button" id="export-btn" aria-label="Back up all data to a file" onclick="backupNow()">BACKUP</button>
     <button type="button" id="settings-btn" aria-label="Open settings" onclick="openSettings()">⚙ SETTINGS</button>
   </div>
 </div>
@@ -2071,7 +2126,7 @@ body.light #build-date {
         <span id="add-msg">✓ Session saved</span>
       </div>
       <div id="full-log-label">Full log — edit directly if needed</div>
-      <textarea id="raw-log" oninput="onRawEdit()" onblur="onRawBlur()"></textarea>
+      <textarea id="raw-log" onfocus="takeSnapshot('before editing the log')" oninput="onRawEdit()" onblur="onRawBlur()"></textarea>
     </div>
 
     <!-- BUILD mode -->
@@ -2251,9 +2306,92 @@ body.light #build-date {
       <button type="button" class="settings-chip" id="chip-unit-kg" onclick="setUnit('kg')">KG</button>
     </div>
   </div>
+  <div class="settings-section">
+    <div class="settings-label">YOUR DATA</div>
+    <div id="data-status" class="data-status"></div>
+    <div class="settings-chips">
+      <button type="button" class="settings-chip" onclick="backupNow()">BACK UP</button>
+      <button type="button" class="settings-chip" onclick="document.getElementById('restore-file').click()">RESTORE</button>
+      <button type="button" class="settings-chip" onclick="exportLog()">LOG AS TEXT</button>
+    </div>
+    <input type="file" id="restore-file" accept=".json,.md,.txt,application/json,text/plain,text/markdown" hidden onchange="onRestoreFile(this)" />
+    <div class="snap-sub" style="margin-top:8px">Back up saves your log, templates, planned workouts and settings to one file. Restore loads such a file, or a log saved as text.</div>
+  </div>
+  <div class="settings-section">
+    <div class="settings-label">SAFETY COPIES</div>
+    <div id="snap-list"></div>
+  </div>
 </div>
 
 <script>
+// ── STORE ─────────────────────────────────────────────────────────────────────
+// Every read and write of saved data goes through here, so there is one place
+// to change where data lives. A backend is an object with four synchronous
+// methods: read(key) → string or null, write(key, string), remove(key), keys().
+// In a browser that is localStorage. A packaged app can supply a file-backed
+// one by setting window.IRONLOG_BACKEND before this script runs (it must have
+// its data in memory by then, since reads are synchronous).
+// Stored values keep their original formats, so existing users need no migration.
+const Store = (() => {
+  const browser = {
+    name: 'browser',
+    read: key => localStorage.getItem(key),
+    write: (key, value) => { localStorage.setItem(key, value); },
+    remove: key => { localStorage.removeItem(key); },
+    keys: () => {
+      const out = [];
+      for (let i = 0; i < localStorage.length; i++) out.push(localStorage.key(i));
+      return out.filter(k => k && k.startsWith('ironlog_'));
+    },
+  };
+  let backend = window.IRONLOG_BACKEND || browser;
+  let failing = false;   // did the most recent write fail?
+  let onFail = null;     // called once each time writes start failing
+
+  const api = {
+    use(b) { backend = b || browser; failing = false; },
+    backendName: () => backend.name || 'custom',
+    onFail(fn) { onFail = fn; },
+    failing: () => failing,
+    get(key) {
+      try { return backend.read(key); } catch(e) { return null; }
+    },
+    // Returns true if the value was saved. quiet = don't raise the alarm on failure
+    // (for data that can be lost without harm, such as safety copies).
+    set(key, value, quiet) {
+      try {
+        backend.write(key, String(value));
+        failing = false;
+        return true;
+      } catch(e) {
+        if (!quiet) {
+          const wasFailing = failing;
+          failing = true;
+          // Deferred: a failure can happen before the rest of the script has loaded
+          if (!wasFailing && onFail) setTimeout(onFail, 0);
+        }
+        return false;
+      }
+    },
+    remove(key) {
+      try { backend.remove(key); return true; } catch(e) { return false; }
+    },
+    keys() {
+      try { return backend.keys(); } catch(e) { return []; }
+    },
+    getJSON(key, fallback) {
+      try {
+        const raw = backend.read(key);
+        if (raw === null || raw === undefined) return fallback;
+        const v = JSON.parse(raw);
+        return v === null ? fallback : v;
+      } catch(e) { return fallback; }
+    },
+    setJSON(key, value, quiet) { return api.set(key, JSON.stringify(value), quiet); },
+  };
+  return api;
+})();
+
 // ── HTML ENCODE HELPER ────────────────────────────────────────────────────────
 function esc(s) {
   return String(s)
@@ -2465,11 +2603,20 @@ function normalizeDate(str) {
       return isoFromParts(y, mi + 1, parseInt(dispMatch[2]));
     }
   }
-  // Bare integer: treat as day of current month
-  const n = parseInt(str);
-  if (!isNaN(n) && n >= 1 && n <= 31) {
-    const now = new Date();
-    return isoFromParts(now.getFullYear(), now.getMonth() + 1, n);
+  // Slash dates, month first: "6/27/2026", "6/27/26", or "6/27" (this year)
+  const slash = str.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?$/);
+  if (slash && +slash[1] >= 1 && +slash[1] <= 12 && +slash[2] >= 1 && +slash[2] <= 31) {
+    const y = !slash[3] ? new Date().getFullYear() : slash[3].length === 2 ? 2000 + +slash[3] : +slash[3];
+    return isoFromParts(y, +slash[1], +slash[2]);
+  }
+  // Bare integer: treat as day of current month. Only when the whole text is a
+  // number, so "6/27/2026" or "27 Jun" is never mistaken for a bare day.
+  if (/^\d{1,2}$/.test(str)) {
+    const n = parseInt(str);
+    if (n >= 1 && n <= 31) {
+      const now = new Date();
+      return isoFromParts(now.getFullYear(), now.getMonth() + 1, n);
+    }
   }
   // Fallback: only hand off to the platform date parser for strings that look
   // like a date (contain letters, '/' or ','), so plain numbers/words aren't
@@ -2712,9 +2859,9 @@ function hexToRgba(hex, a) {
 function loadSettings() {
   try {
     // migrate old theme key
-    const oldTheme = localStorage.getItem('ironlog_theme');
+    const oldTheme = Store.get('ironlog_theme');
     if (oldTheme) settings.theme = oldTheme;
-    const s = localStorage.getItem(SETTINGS_KEY);
+    const s = Store.get(SETTINGS_KEY);
     if (s) {
       const parsed = JSON.parse(s);
       const VALID_THEMES = ['dark', 'light'];
@@ -2734,7 +2881,7 @@ function loadSettings() {
 }
 
 function saveSettings() {
-  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch(e) {}
+  Store.setJSON(SETTINGS_KEY, settings);
 }
 
 function applySettings() {
@@ -2795,6 +2942,7 @@ function syncSettingsUI() {
 
 function openSettings() {
   syncSettingsUI();
+  renderData();
   document.getElementById('settings-overlay').classList.add('open');
   document.getElementById('settings-drawer').classList.add('open');
 }
@@ -2863,19 +3011,28 @@ function todayLocalISO() {
 }
 
 function load() {
-  try {
-    const s = localStorage.getItem(STORAGE_KEY);
-    if (s) return JSON.parse(s).rawText;
-  } catch(e) {}
-  return null;
+  const saved = Store.getJSON(STORAGE_KEY, null);
+  return saved && typeof saved.rawText === 'string' ? saved.rawText : null;
 }
 
+// Saves the log and says, truthfully, whether it worked
 function save(text) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ rawText: text })); } catch(e) {}
+  // First try quietly: if there is no room, give up all but the newest safety
+  // copy and try again. Only a failure of that second try raises the alarm.
+  let ok = Store.setJSON(STORAGE_KEY, { rawText: text }, true);
+  if (!ok) {
+    Store.setJSON(SNAP_KEY, loadSnapshots().slice(0, 1), true);
+    ok = Store.setJSON(STORAGE_KEY, { rawText: text });
+  }
   const ind = document.getElementById('save-indicator');
+  ind.textContent = ok ? 'SAVED ✓' : 'NOT SAVED ✗';
+  ind.classList.toggle('error', !ok);
   ind.classList.add('show');
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => ind.classList.remove('show'), 1400);
+  if (ok) {
+    saveTimer = setTimeout(() => ind.classList.remove('show'), 1400);
+    requestPersistence();
+  }
 }
 
 // Persisted separately from rawText so an in-progress BUILD-mode session
@@ -2895,18 +3052,12 @@ function saveBuilder() {
     weight: w && !w.dataset.prefilled ? w.value : '',
     reps: r ? r.value : '',
   };
-  try { localStorage.setItem(BUILD_KEY, JSON.stringify(b)); } catch(e) {}
+  Store.setJSON(BUILD_KEY, b);
 }
 
 function loadBuilder() {
-  try {
-    const s = localStorage.getItem(BUILD_KEY);
-    if (!s) return null;
-    const b = JSON.parse(s);
-    if (!b || !Array.isArray(b.exercises)) return null;
-    return b;
-  } catch(e) {}
-  return null;
+  const b = Store.getJSON(BUILD_KEY, null);
+  return b && Array.isArray(b.exercises) ? b : null;
 }
 
 function recompute() {
@@ -2949,6 +3100,7 @@ function addSession() {
   }
 
   const before = state.prs;
+  takeSnapshot('before import');
   setRawText(state.rawText ? input + '\n\n' + state.rawText : input);
   // Records beaten by the imported session(s); brand-new exercises are not announced
   const beaten = Object.keys(state.prs).filter(ex => before[ex] && beatsRecord(state.prs[ex], before[ex]));
@@ -2973,13 +3125,7 @@ function onRawBlur() {
 }
 
 function exportLog() {
-  const blob = new Blob([state.rawText], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'workout-log.md';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 100);
+  downloadText('workout-log.md', state.rawText, 'text/plain');
 }
 
 // ── BUILDER ──────────────────────────────────────────────────────────────────
@@ -3139,7 +3285,7 @@ function runnerState(cfg, elapsedMs) {
 // Sound and vibration cues. kind: 'phase' (a change), 'tick' (3-2-1), 'done'.
 const SOUND_KEY = 'ironlog_sound';
 let soundOn = true;
-try { soundOn = localStorage.getItem(SOUND_KEY) !== '0'; } catch(e) {}
+soundOn = Store.get(SOUND_KEY) !== '0';
 let audioCtx = null;
 const cueLog = []; // recent cues, newest last
 
@@ -3167,7 +3313,7 @@ function cue(kind, label) {
 
 function setSound(on) {
   soundOn = !!on;
-  try { localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch(e) {}
+  Store.set(SOUND_KEY, soundOn ? '1' : '0');
   document.querySelectorAll('.sound-toggle').forEach(c => { c.checked = soundOn; });
 }
 
@@ -3320,7 +3466,7 @@ function ivButtons() {
 function ivIdle() {
   if (iv) return;
   const c = ivConfig();
-  try { localStorage.setItem(IV_KEY, JSON.stringify(c)); } catch(e) {}
+  Store.setJSON(IV_KEY, c);
   document.getElementById('iv-display').dataset.phase = 'idle';
   document.getElementById('iv-phase').textContent = 'READY';
   document.getElementById('iv-count').textContent = fmtClock(c.work);
@@ -3524,12 +3670,12 @@ const RECENT_STEP = 5;
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 let recentShown = RECENT_STEP;
 let recentOpen = false;
-try { recentOpen = localStorage.getItem(RECENT_KEY) === '1'; } catch(e) {}
+recentOpen = Store.get(RECENT_KEY) === '1';
 
 function toggleRecent() {
   recentOpen = !recentOpen;
   recentShown = RECENT_STEP;
-  try { localStorage.setItem(RECENT_KEY, recentOpen ? '1' : '0'); } catch(e) {}
+  Store.set(RECENT_KEY, recentOpen ? '1' : '0');
   renderRecent();
 }
 
@@ -3578,16 +3724,8 @@ function renderRecent() {
 }
 
 // ── SMALL STORAGE HELPERS ────────────────────────────────────────────────────
-function loadStored(key, fallback) {
-  try {
-    const v = JSON.parse(localStorage.getItem(key));
-    return v === null ? fallback : v;
-  } catch(e) { return fallback; }
-}
-
-function store(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
-}
+function loadStored(key, fallback) { return Store.getJSON(key, fallback); }
+function store(key, value) { Store.setJSON(key, value); }
 
 // One past session's exercises, sets and notes. editable = notes can be tapped
 // to edit and the session can be saved as a template (the recent list);
@@ -4026,6 +4164,223 @@ function renderCalDetail() {
 loadTemplates();
 loadPlan();
 calInit();
+
+// ── YOUR DATA: backup, restore, safety copies ────────────────────────────────
+const BACKUP_VERSION = 1;
+const LAST_BACKUP_KEY = 'ironlog_last_backup';
+const SNAP_KEY = 'ironlog_snapshots';
+const SNAP_MAX = 10;            // how many safety copies to keep
+const SNAP_MAX_CHARS = 1500000; // and how much room they may take in total
+const SNAP_DAILY_MS = 20 * 60 * 60 * 1000;
+let storagePersisted = null;    // true/false once the browser has told us; null = unknown
+
+function downloadText(name, text, type) {
+  const blob = new Blob([text], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+// Everything worth keeping: the log, templates, planned workouts and display settings
+function buildBackup() {
+  return {
+    app: 'ironlog', version: BACKUP_VERSION, exportedAt: new Date(clockNow()).toISOString(),
+    log: state.rawText, templates, plan, settings: { ...settings },
+  };
+}
+
+// On a phone this opens the share sheet (save to Files, Drive, email…);
+// elsewhere it downloads the file.
+async function backupNow() {
+  const name = `iron-log-backup-${todayLocalISO()}.json`;
+  const text = JSON.stringify(buildBackup(), null, 2);
+  const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  if (touch && navigator.canShare) {
+    try {
+      const file = new File([text], name, { type: 'application/json' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'Iron Log backup' });
+        markBackedUp();
+        return;
+      }
+    } catch(e) {
+      if (e && e.name === 'AbortError') return; // the user closed the share sheet
+    }
+  }
+  downloadText(name, text, 'application/json');
+  markBackedUp();
+}
+
+function markBackedUp() {
+  Store.set(LAST_BACKUP_KEY, new Date(clockNow()).toISOString());
+  renderData();
+  showToast('Backup saved');
+}
+
+// Reads a file's text as a backup. Accepts a full backup, or a plain workout
+// log (the old EXPORT file, or any text in the log format).
+// Returns { ok: true, kind: 'full' | 'log', data, exportedAt } or { ok: false, error }.
+function parseBackup(text) {
+  let obj = null;
+  try { obj = JSON.parse(text); } catch(e) {}
+  if (obj && typeof obj === 'object' && obj.app === 'ironlog') {
+    if (typeof obj.version !== 'number' || obj.version > BACKUP_VERSION) {
+      return { ok: false, error: 'This backup was made by a newer version of Iron Log. Update the app, then try again.' };
+    }
+    if (typeof obj.log !== 'string') return { ok: false, error: 'This backup file is damaged: it has no workout log.' };
+    return {
+      ok: true, kind: 'full', exportedAt: typeof obj.exportedAt === 'string' ? obj.exportedAt : '',
+      data: {
+        log: obj.log,
+        templates: Array.isArray(obj.templates) ? obj.templates : [],
+        plan: Array.isArray(obj.plan) ? obj.plan : [],
+        settings: obj.settings && typeof obj.settings === 'object' ? obj.settings : null,
+      },
+    };
+  }
+  // The app's own stored form of the log
+  const logText = obj && typeof obj === 'object' && typeof obj.rawText === 'string' ? obj.rawText : (obj === null ? String(text) : '');
+  if (logText && parseSessions(normalizeRawLogDates(logText).text).length > 0) {
+    return { ok: true, kind: 'log', exportedAt: '', data: { log: logText } };
+  }
+  return { ok: false, error: 'This file is not an Iron Log backup or workout log.' };
+}
+
+function countLabel(n, word) { return `${n} ${word}${n === 1 ? '' : 's'}`; }
+
+// Replaces the saved data with data = { log, templates?, plan?, settings? }.
+// Parts that are missing are left as they are. Templates and plans go through
+// the same checks as when they are loaded, so bad entries are dropped.
+function applyData(data) {
+  if (Array.isArray(data.templates)) { Store.setJSON(TEMPLATES_KEY, data.templates); loadTemplates(); Store.setJSON(TEMPLATES_KEY, templates); }
+  if (Array.isArray(data.plan)) { Store.setJSON(PLAN_KEY, data.plan); loadPlan(); savePlan(); }
+  if (data.settings) { Store.setJSON(SETTINGS_KEY, data.settings); loadSettings(); saveSettings(); applySettings(); syncSettingsUI(); }
+  setRawText(normalizeRawLogDates(data.log).text); // also redraws the recent list, calendar and banner
+  renderPRs();
+  renderTemplates();
+  renderVolume();
+  if (state.selectedEx && !state.prs[state.selectedEx]) state.selectedEx = null;
+  renderProgress();
+  buildPreviewFromScratch(); // unit or history may have changed under the workout being built
+  renderData();
+}
+
+async function onRestoreFile(input) {
+  const file = input.files && input.files[0];
+  input.value = ''; // so picking the same file again still fires
+  if (!file) return;
+  let text = '';
+  try { text = await file.text(); } catch(e) { showToast('Could not read that file'); return; }
+  restoreFromText(text);
+}
+
+function restoreFromText(text) {
+  const res = parseBackup(text);
+  if (!res.ok) { alert(res.error); return false; }
+  const d = res.data;
+  const sessions = parseSessions(normalizeRawLogDates(d.log).text).length;
+  const now = `Your current data (${countLabel(state.sessions.length, 'workout')}) will be replaced. A safety copy is kept, so you can go back.`;
+  const msg = res.kind === 'full'
+    ? `Restore this backup${res.exportedAt ? ' from ' + isoToDisplay(res.exportedAt.slice(0, 10)) : ''}?\n\n` +
+      `It has ${countLabel(sessions, 'workout')}, ${countLabel(cleanEntriesCount(d.templates), 'template')} and ${countLabel(d.plan.length, 'planned workout')}.\n\n${now}`
+    : `Restore this workout log?\n\nIt has ${countLabel(sessions, 'workout')}. Your templates and planned workouts are not affected.\n\n${now}`;
+  if (!confirm(msg)) return false;
+  takeSnapshot('before restore');
+  applyData(d);
+  showToast(`Restored ${countLabel(sessions, 'workout')}`);
+  return true;
+}
+
+function cleanEntriesCount(list) {
+  return (Array.isArray(list) ? list : []).filter(t => t && cleanNote(t.name) && cleanEntries(t.entries).length).length;
+}
+
+// ── Safety copies: the last few versions of the data, kept on this device ──
+function snapData() { return JSON.stringify({ log: state.rawText, templates, plan }); }
+
+function loadSnapshots() {
+  const raw = Store.getJSON(SNAP_KEY, []);
+  return (Array.isArray(raw) ? raw : []).filter(s => s && typeof s.at === 'number' && typeof s.data === 'string');
+}
+
+function saveSnapshots(snaps) {
+  const size = () => snaps.reduce((a, s) => a + s.data.length, 0);
+  while (snaps.length > SNAP_MAX || (snaps.length > 1 && size() > SNAP_MAX_CHARS)) snaps.pop();
+  // If there is no room, give up older copies rather than fail
+  while (!Store.setJSON(SNAP_KEY, snaps, true) && snaps.length > 0) snaps.pop();
+}
+
+// Keeps a copy of the data as it is now (newest first). Skipped when nothing
+// has changed since the last copy. Returns true if a copy was made.
+function takeSnapshot(why) {
+  const snaps = loadSnapshots();
+  const data = snapData();
+  if (snaps.length && snaps[0].data === data) return false;
+  snaps.unshift({ at: clockNow(), why, data });
+  saveSnapshots(snaps);
+  renderData();
+  return true;
+}
+
+function restoreSnapshot(at) {
+  const snap = loadSnapshots().find(s => s.at === at);
+  if (!snap) return;
+  let data = null;
+  try { data = JSON.parse(snap.data); } catch(e) {}
+  if (!data || typeof data.log !== 'string') { showToast('That safety copy could not be read'); return; }
+  const count = parseSessions(data.log).length;
+  if (!confirm(`Go back to the copy from ${fmtWhen(snap.at)}?\n\nIt has ${countLabel(count, 'workout')}. Your current data is kept as a safety copy first.`)) return;
+  takeSnapshot('before going back');
+  applyData({ log: data.log, templates: data.templates, plan: data.plan });
+  showToast(`Went back to ${fmtWhen(snap.at)}`);
+}
+
+function fmtWhen(ms) {
+  const d = new Date(ms);
+  const h = d.getHours();
+  return `${MONTHS_SHORT[d.getMonth()]} ${d.getDate()}, ${h % 12 || 12}:${String(d.getMinutes()).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+}
+
+// The first time real data is saved, ask the browser not to clear it when space runs low
+let persistAsked = false;
+function requestPersistence() {
+  if (persistAsked) return;
+  persistAsked = true;
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().then(ok => { storagePersisted = !!ok; renderData(); }).catch(() => {});
+    }
+  } catch(e) {}
+}
+
+// The "Your data" part of Settings
+function renderData() {
+  const status = document.getElementById('data-status');
+  const list = document.getElementById('snap-list');
+  if (!status || !list) return;
+  const last = Store.get(LAST_BACKUP_KEY);
+  const lines = [
+    `${countLabel(state.sessions.length, 'workout')} · ${countLabel(templates.length, 'template')} · ${plan.length} planned`,
+    last ? `Last backup: ${isoToDisplay(last.slice(0, 10))}` : 'Last backup: never. A backup file is the only copy outside this device.',
+  ];
+  if (Store.failing()) lines.push('⚠ Changes are NOT being saved: storage is full or blocked. Back up now.');
+  else if (storagePersisted === true) lines.push('Storage: protected from automatic clearing.');
+  else if (storagePersisted === false) lines.push('Storage: the browser may clear this data if the device runs low on space.');
+  status.innerHTML = lines.map(l => `<div${l.startsWith('⚠') ? ' class="warn"' : ''}>${esc(l)}</div>`).join('');
+
+  const snaps = loadSnapshots();
+  list.innerHTML = snaps.length ? snaps.map(s => {
+    let count = 0;
+    try { count = parseSessions(JSON.parse(s.data).log || '').length; } catch(e) {}
+    return `<div class="snap-row" data-at="${s.at}">
+      <div class="snap-main"><div>${esc(fmtWhen(s.at))}</div><div class="snap-sub">${esc(cleanNote(s.why))} · ${countLabel(count, 'workout')}</div></div>
+      <button type="button" class="settings-chip snap-restore">GO BACK</button>
+    </div>`;
+  }).join('') : '<div class="snap-sub">None yet. A copy is kept automatically each day and before big changes.</div>';
+}
 
 // ── BUILDER DOM HELPERS ───────────────────────────────────────────────────────
 // A builder entry is either a single exercise { name, sets: [set] } or a
@@ -4874,15 +5229,60 @@ renderPRs();
 // BUILD is the default mode: fill in today's date and the exercise suggestions
 setLogMode('build');
 
-// Timer tab: bring back the last interval settings and the beep choice
+// Your data: say so if saving fails, keep a daily safety copy, follow other tabs
+Store.onFail(() => {
+  showToast('Could not save: storage is full or blocked. Back up from Settings.');
+  renderData();
+});
 try {
-  const c = JSON.parse(localStorage.getItem(IV_KEY) || 'null');
+  if (navigator.storage && navigator.storage.persisted) {
+    navigator.storage.persisted().then(ok => { storagePersisted = !!ok; renderData(); }).catch(() => {});
+  }
+} catch(e) {}
+if (load() !== null) {
+  const snaps = loadSnapshots();
+  if (!snaps.length || clockNow() - snaps[0].at > SNAP_DAILY_MS) takeSnapshot('daily copy');
+}
+renderData();
+
+document.getElementById('snap-list').addEventListener('click', e => {
+  const row = e.target.closest('.snap-row');
+  if (row && e.target.closest('.snap-restore')) restoreSnapshot(Number(row.dataset.at));
+});
+
+// Another tab of the app changed the saved data: take it up here too
+window.addEventListener('storage', e => {
+  if (e.key === STORAGE_KEY) {
+    const text = load();
+    if (text === null || text === state.rawText) return;
+    state.rawText = text;
+    document.getElementById('raw-log').value = text;
+    recompute();
+    renderPRs();
+    showToast('Log updated from another tab');
+  } else if (e.key === TEMPLATES_KEY) {
+    loadTemplates();
+    renderTemplates();
+    renderCalendar();
+  } else if (e.key === PLAN_KEY) {
+    loadPlan();
+    renderCalendar();
+    renderPlanBanner();
+  } else {
+    return;
+  }
+  renderData();
+});
+
+// Timer tab: bring back the last interval settings and the beep choice
+{
+  const c = Store.getJSON(IV_KEY, null);
   if (c && typeof c === 'object') {
     for (const k of ['work', 'rest', 'rounds']) {
       if (Number.isFinite(c[k])) document.getElementById('iv-' + k).value = c[k];
     }
   }
-} catch(e) {}
+}
 ivIdle();
 renderSw();
 setSound(soundOn);

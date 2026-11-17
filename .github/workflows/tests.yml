@@ -1,0 +1,18 @@
+name: Tests
+
+# Runs the browser test suites on every pull request and on each push to main.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the test suites in headless Chrome
+        run: bash tests/run.sh
