@@ -114,16 +114,18 @@ textarea {
 #tabs {
   display: flex;
   border-bottom: 1px solid #2a2a2a;
-  padding: 0 16px;
+  padding: 0 8px;
   overflow-x: auto;
 }
 
+/* Sized so all five tabs fit across a phone screen without scrolling */
 .tab-btn {
+  flex: 1 0 auto;
   background: none;
   border: none;
-  padding: 11px 12px 9px;
+  padding: 11px 5px 9px;
   font-size: 11px;
-  letter-spacing: 1px;
+  letter-spacing: 0.3px;
   text-transform: uppercase;
   color: #999;
   border-bottom: 2px solid transparent;
@@ -431,6 +433,172 @@ canvas#chart {
 #toast.show {
   transform: translate(-50%, 0);
   opacity: 1;
+}
+
+/* TEMPO, PACER, TIMERS */
+.build-tempo-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.build-pacer-btn {
+  border-style: solid;
+  color: var(--accent);
+}
+
+#pacer {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  background: #0f0f0f;
+  text-align: center;
+}
+
+#pacer.open {
+  display: flex;
+}
+
+#pacer-title {
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #999;
+}
+
+#pacer-phase,
+.timer-phase {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #999;
+}
+
+#pacer-count {
+  font-size: 150px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+#pacer-reps {
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+
+#pacer .timer-btn {
+  flex: none;
+  padding: 16px 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+/* The effort phases take the accent colour; holds and rests stay quiet */
+#pacer[data-phase="up"] #pacer-phase,
+#pacer[data-phase="down"] #pacer-phase,
+.timer-display[data-phase="work"] .timer-phase {
+  color: var(--accent);
+}
+
+.timer-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: #999;
+}
+
+.timer-fields label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-fields input:disabled {
+  opacity: 0.5;
+}
+
+.timer-display {
+  text-align: center;
+  padding: 18px 0 12px;
+}
+
+.timer-count {
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-sub {
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #999;
+  margin-top: 4px;
+}
+
+.timer-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.timer-btn {
+  flex: 1;
+  background: none;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #bbb;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  padding: 12px 8px;
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+.timer-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #000;
+}
+
+.timer-btn:active {
+  opacity: 0.8;
+}
+
+.sw-lap {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #bbb;
+  padding: 7px 2px;
+  border-bottom: 1px solid #222;
+  font-variant-numeric: tabular-nums;
+}
+
+.sw-lap span:first-child {
+  color: #888;
+  letter-spacing: 1px;
+}
+
+.timer-sound {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #999;
+  margin-top: 22px;
 }
 
 /* NOTES */
@@ -1263,6 +1431,55 @@ body.light .mode-btn.active {
   color: #fff;
 }
 
+body.light #pacer {
+  background: #f3f3f3;
+}
+
+body.light #pacer-count,
+body.light .timer-count {
+  color: #111;
+}
+
+body.light #pacer-title,
+body.light #pacer-phase,
+body.light .timer-phase,
+body.light .timer-sub,
+body.light .timer-fields,
+body.light .timer-sound {
+  color: #666;
+}
+
+body.light #pacer-reps {
+  color: #333;
+}
+
+body.light #pacer[data-phase="up"] #pacer-phase,
+body.light #pacer[data-phase="down"] #pacer-phase,
+body.light .timer-display[data-phase="work"] .timer-phase,
+body.light .build-pacer-btn {
+  color: #3a7000;
+}
+
+body.light .timer-btn {
+  border-color: #d0d0d0;
+  color: #555;
+}
+
+body.light .timer-btn.primary {
+  background: #3a7000;
+  border-color: #3a7000;
+  color: #fff;
+}
+
+body.light .sw-lap {
+  color: #444;
+  border-color: #e0e0e0;
+}
+
+body.light .sw-lap span:first-child {
+  color: #777;
+}
+
 body.light #toast {
   background: #3a7000;
   color: #fff;
@@ -1487,6 +1704,7 @@ body.light #build-date {
   <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-prs" onclick="switchTab('prs',this)">🏆 PRs</button>
   <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-progress" onclick="switchTab('progress',this)">📈 Progress</button>
   <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-volume" onclick="switchTab('volume',this)">🔥 Volume</button>
+  <button type="button" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-timer" onclick="switchTab('timer',this)">⏱ Timer</button>
 </div>
 
 <div id="content">
@@ -1502,7 +1720,7 @@ body.light #build-date {
     <div id="paste-mode" style="display:none">
       <p class="hint">Paste your session. Your existing format works as-is.<br>
         <span>## Jun 27 2026</span> → date &nbsp;·&nbsp; <span>Exercise Name</span> → exercise &nbsp;·&nbsp; <span>- 70# 10</span> → set<br>
-        Back to back: <span>Dips + Pullups</span> then <span>- 45# 10 + 45# 8</span> per round &nbsp;·&nbsp; <span>x3</span> repeats a line &nbsp;·&nbsp; <span>bw 12</span> → bodyweight &nbsp;·&nbsp; <span>&gt; text</span> → note
+        Back to back: <span>Dips + Pullups</span> then <span>- 45# 10 + 45# 8</span> per round &nbsp;·&nbsp; <span>x3</span> repeats a line &nbsp;·&nbsp; <span>bw 12</span> → bodyweight &nbsp;·&nbsp; <span>&gt; text</span> → note &nbsp;·&nbsp; <span>@10-10</span> on a set → tempo (seconds down-up)
       </p>
       <textarea id="log-input" placeholder="## 25&#10;Dips&#10;- 50# 10&#10;- 55# 8&#10;Lat Pulldown&#10;- 140# 10&#10;- 150# 10"></textarea>
       <div style="display:flex;align-items:center;margin-top:10px">
@@ -1574,6 +1792,49 @@ body.light #build-date {
       <div id="attention-list"></div>
     </div>
   </div>
+
+  <!-- TIMER -->
+  <div id="panel-timer" class="panel" role="tabpanel">
+    <div class="section-label">Interval timer</div>
+    <div class="timer-fields">
+      <label>WORK <input type="number" id="iv-work" class="build-input-sm" min="1" value="30" oninput="ivIdle()" /> s</label>
+      <label>REST <input type="number" id="iv-rest" class="build-input-sm" min="0" value="15" oninput="ivIdle()" /> s</label>
+      <label>ROUNDS <input type="number" id="iv-rounds" class="build-input-sm" min="1" value="8" oninput="ivIdle()" /></label>
+    </div>
+    <div id="iv-display" class="timer-display" data-phase="idle">
+      <div id="iv-phase" class="timer-phase">READY</div>
+      <div id="iv-count" class="timer-count">0:30</div>
+      <div id="iv-round" class="timer-sub"></div>
+    </div>
+    <div class="timer-btns">
+      <button type="button" id="iv-start" class="timer-btn primary" onclick="ivToggle()">START</button>
+      <button type="button" class="timer-btn" onclick="ivReset()">RESET</button>
+    </div>
+
+    <div class="section-label" style="margin-top:30px">Stopwatch</div>
+    <div class="timer-display">
+      <div id="sw-count" class="timer-count">0:00.0</div>
+    </div>
+    <div class="timer-btns">
+      <button type="button" id="sw-start" class="timer-btn primary" onclick="swToggle()">START</button>
+      <button type="button" class="timer-btn" onclick="swLap()">LAP</button>
+      <button type="button" class="timer-btn" onclick="swReset()">RESET</button>
+    </div>
+    <div id="sw-laps"></div>
+
+    <label class="timer-sound"><input type="checkbox" class="sound-toggle" onchange="setSound(this.checked)" checked /> Beeps (the phone also vibrates where supported)</label>
+  </div>
+</div>
+
+<!-- REP PACER -->
+<div id="pacer" role="dialog" aria-label="Rep pacer" data-phase="lead">
+  <div id="pacer-title"></div>
+  <div id="pacer-phase">GET READY</div>
+  <div id="pacer-count">3</div>
+  <div id="pacer-reps">0 reps done</div>
+  <button type="button" id="pacer-done" class="timer-btn primary" onclick="stopPacer(true)">DONE</button>
+  <button type="button" class="timer-btn" onclick="stopPacer(false)">CANCEL</button>
+  <label class="timer-sound"><input type="checkbox" class="sound-toggle" onchange="setSound(this.checked)" checked /> Beeps</label>
 </div>
 
 <!-- SETTINGS DRAWER -->
@@ -1942,8 +2203,9 @@ function parseSessions(text) {
           block.rows.push(row);
           row.forEach((set, i) => {
             if (!set) return;
-            if (!sess.exercises[exs[i]]) sess.exercises[exs[i]] = [];
-            sess.exercises[exs[i]].push({ ...set });
+            const key = statName(exs[i], set.tempo);
+            if (!sess.exercises[key]) sess.exercises[key] = [];
+            sess.exercises[key].push({ ...set });
           });
         }
       }
@@ -1968,7 +2230,12 @@ const MAX_LINE_REPEAT = 50;
 // Parses one set ("45# 10", "wide 45# 10", "bw 12", "12") into a set object,
 // or null if it can't be read safely.
 function parseSetSegment(seg) {
-  const parts = seg.trim().split(/\s+/);
+  const all = seg.trim().split(/\s+/);
+  // "@10-10" is a tempo tag; everything else is read as before
+  const tToken = all.find(p => p.startsWith('@'));
+  const tempo = tToken ? normTempo(tToken) : '';
+  const parts = all.filter(p => !p.startsWith('@'));
+  const extra = tempo ? { tempo } : {};
   // Weight token: the one containing '#'
   const wToken = parts.find(p => p.includes('#'));
   // Reps token: last token that's a plain integer or a rep range like "8-10"
@@ -1978,10 +2245,10 @@ function parseSetSegment(seg) {
   }
   if (!repsToken) return null;
   const reps = parseInt(repsToken); // rep ranges ("8-10") take the first number
-  if (wToken) return { ...parseWeight(wToken), reps: isNaN(reps) ? 10 : reps };
+  if (wToken) return { ...parseWeight(wToken), reps: isNaN(reps) ? 10 : reps, ...extra };
   // Bodyweight: an explicit "bw" marker, or reps on their own ("12")
   if (parts.length === 1 || parts.some(p => /^bw$/i.test(p))) {
-    return { dual: false, v: 0, assisted: false, bw: true, reps: isNaN(reps) ? 10 : reps };
+    return { dual: false, v: 0, assisted: false, bw: true, reps: isNaN(reps) ? 10 : reps, ...extra };
   }
   return null; // no '#' weight marker — can't tell weight from reps
 }
@@ -2364,7 +2631,7 @@ function setLogMode(mode) {
 }
 
 function refreshBuilderSuggestions() {
-  const names = new Set([...Object.values(ALIASES), ...Object.keys(state.prs)]);
+  const names = new Set([...Object.values(ALIASES), ...Object.keys(state.prs).map(baseName)]);
   document.getElementById('build-ex-suggestions').innerHTML =
     [...names].sort().map(n => `<option value="${esc(n)}">`).join('');
 }
@@ -2388,15 +2655,17 @@ function lastLogged(name) {
     if (s.exercises[name] && (!best || compareDates(s.date, best.date) > 0)) best = s;
   }
   if (!best) return null;
-  const note = best.blocks.filter(b => b.note && b.names.includes(name)).map(b => b.note).join(' · ');
+  const note = best.blocks.filter(b => b.note && b.names.includes(baseName(name))).map(b => b.note).join(' · ');
   return { date: best.date, sets: best.exercises[name], note };
 }
 
 // Which exercise and set number the active entry's inputs are about to record
 function nextSetSlot(entry) {
-  return isGroup(entry)
+  const slot = isGroup(entry)
     ? { name: entry.names[entry.cur.length], idx: entry.rounds.length, prev: entry.rounds.length ? entry.rounds[entry.rounds.length - 1][entry.cur.length] : null }
     : { name: entry.name, idx: entry.sets.length, prev: entry.sets.length ? entry.sets[entry.sets.length - 1] : null };
+  slot.name = statName(slot.name, entry.tempo); // slow-tempo work has its own history
+  return slot;
 }
 
 // Best guess at the next set's weight as input text ('' = no guess): the
@@ -2438,6 +2707,333 @@ function lastHintText(entry) {
   const more = last.sets.length > MAX ? ' · …' : '';
   const unit = last.sets.some(x => !x.bw) ? ' ' + settings.unit : '';
   return `LAST · ${shortDate(last.date)}: ${parts.join(' · ')}${more}${unit}${last.note ? `\n“${last.note}”` : ''}`;
+}
+
+// ── TEMPO ─────────────────────────────────────────────────────────────────────
+// Tempo is seconds per phase of one rep, written "down-up" ("10-10") or
+// "down-hold-up-hold" ("3-1-2-0"). In the log it is a tag on a set: "- 45# 6 @10-10".
+// Returns the canonical string, or '' if the text is not a tempo.
+function normTempo(text) {
+  const m = String(text || '').trim().replace(/^@/, '').match(/^\d+(?:\.\d+)?(?:-\d+(?:\.\d+)?){1,3}$/);
+  if (!m) return '';
+  let n = m[0].split('-').map(Number);
+  if (n.length === 3) return '';
+  if (n.length === 4 && n[1] === 0 && n[3] === 0) n = [n[0], n[2]];
+  if (n.reduce((a, b) => a + b, 0) <= 0) return '';
+  return n.join('-');
+}
+
+// The timed phases of one rep, leaving out any that take no time
+function tempoPhases(tempo) {
+  const n = tempo.split('-').map(Number);
+  const [down, hold1, up, hold2] = n.length === 2 ? [n[0], 0, n[1], 0] : n;
+  return [
+    { label: 'DOWN', secs: down }, { label: 'HOLD', secs: hold1 },
+    { label: 'UP', secs: up }, { label: 'HOLD', secs: hold2 },
+  ].filter(p => p.secs > 0);
+}
+
+function tempoSecs(tempo) { return tempo.split('-').reduce((a, b) => a + Number(b), 0); }
+
+// Sets done at a tempo are tracked as their own exercise ("Dips @10-10") so slow
+// work and normal work keep separate records, charts and weight guesses.
+function statName(name, tempo) { return tempo ? `${name} @${tempo}` : name; }
+function baseName(key) { return key.replace(/ @[\d.]+(-[\d.]+)+$/, ''); }
+
+// Seconds as m:ss
+function fmtClock(secs) {
+  const s = Math.max(0, Math.round(secs));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+// ── TIMERS: shared engine ─────────────────────────────────────────────────────
+let clockNow = () => Date.now(); // one place to read the time (tests swap it out)
+
+// Where a repeating sequence of timed phases has got to after elapsedMs.
+// cfg = { phases: [{label, secs}], rounds (Infinity = until stopped),
+//         lead: get-ready seconds, trim: seconds cut off the very end (the last rest) }
+function runnerState(cfg, elapsedMs) {
+  // Worked in whole milliseconds so a phase boundary is exact, never 10.0000001 s
+  const ms = secs => Math.round(secs * 1000);
+  const t = Math.floor(elapsedMs);
+  const lead = ms(cfg.lead);
+  if (t < lead) return { lead: true, done: false, round: 0, phase: -1, remaining: (lead - t) / 1000 };
+  const lens = cfg.phases.map(p => ms(p.secs));
+  const cycle = lens.reduce((a, b) => a + b, 0);
+  let x = t - lead;
+  if (x >= cfg.rounds * cycle - ms(cfg.trim || 0)) return { lead: false, done: true, round: cfg.rounds, phase: -1, remaining: 0 };
+  const round = Math.floor(x / cycle);
+  x -= round * cycle;
+  let phase = 0;
+  while (phase < lens.length - 1 && x >= lens[phase]) { x -= lens[phase]; phase++; }
+  return { lead: false, done: false, round, phase, remaining: (lens[phase] - x) / 1000 };
+}
+
+// Sound and vibration cues. kind: 'phase' (a change), 'tick' (3-2-1), 'done'.
+const SOUND_KEY = 'ironlog_sound';
+let soundOn = true;
+try { soundOn = localStorage.getItem(SOUND_KEY) !== '0'; } catch(e) {}
+let audioCtx = null;
+const cueLog = []; // recent cues, newest last
+
+function cue(kind, label) {
+  cueLog.push(label ? `${kind}:${label}` : kind);
+  if (cueLog.length > 60) cueLog.shift();
+  try { if (navigator.vibrate) navigator.vibrate(kind === 'tick' ? 40 : kind === 'done' ? [200, 100, 200] : 150); } catch(e) {}
+  if (!soundOn) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    // Higher pitch for the effort phases, lower for the others
+    osc.frequency.value = kind === 'tick' ? 660 : kind === 'done' ? 520 : (label === 'UP' || label === 'WORK') ? 880 : 587;
+    const dur = kind === 'tick' ? 0.08 : kind === 'done' ? 0.6 : 0.2;
+    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+  } catch(e) {}
+}
+
+function setSound(on) {
+  soundOn = !!on;
+  try { localStorage.setItem(SOUND_KEY, soundOn ? '1' : '0'); } catch(e) {}
+  document.querySelectorAll('.sound-toggle').forEach(c => { c.checked = soundOn; });
+}
+
+// Keep the screen awake while something is timing (where the browser allows it)
+let wakeLock = null, wakeHolders = 0;
+
+function requestWake() {
+  if (wakeLock || !wakeHolders || !navigator.wakeLock) return;
+  try {
+    navigator.wakeLock.request('screen').then(lock => {
+      wakeLock = lock;
+      lock.addEventListener('release', () => { if (wakeLock === lock) wakeLock = null; });
+      if (!wakeHolders) releaseWake();
+    }).catch(() => {});
+  } catch(e) {}
+}
+
+function holdWake() { wakeHolders++; requestWake(); }
+
+function releaseWake() {
+  wakeHolders = Math.max(0, wakeHolders - 1);
+  if (!wakeHolders && wakeLock) { try { wakeLock.release(); } catch(e) {} wakeLock = null; }
+}
+
+// The browser drops the wake lock when the page is hidden; take it again on return
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') requestWake(); });
+
+// Runs a sequence against the clock, cueing on each change. Time is always
+// worked out from the clock, so a slow or paused tab catches up correctly.
+function makeRunner(cfg, onUpdate) {
+  const r = { cfg, base: 0, startedAt: null, timer: null, lastKey: '', lastSec: null, finished: false };
+  r.elapsed = () => r.base + (r.startedAt === null ? 0 : clockNow() - r.startedAt);
+  r.running = () => r.startedAt !== null;
+  r.tick = () => {
+    const st = runnerState(cfg, r.elapsed());
+    const key = st.done ? 'done' : st.lead ? 'lead' : `${st.round}:${st.phase}`;
+    const sec = Math.ceil(st.remaining);
+    if (key !== r.lastKey) {
+      if (r.lastKey !== '') cue(st.done ? 'done' : 'phase', st.done ? '' : cfg.phases[st.phase].label);
+      r.lastKey = key;
+      r.lastSec = sec;
+    } else if (sec !== r.lastSec) {
+      r.lastSec = sec;
+      if (sec >= 1 && sec <= 3 && (st.lead || cfg.countdownBeeps)) cue('tick');
+    }
+    if (st.done) { r.finished = true; r.pause(); }
+    onUpdate(st);
+  };
+  r.start = () => {
+    if (r.running() || r.finished) return;
+    r.startedAt = clockNow();
+    r.timer = setInterval(r.tick, 100);
+    holdWake();
+    r.tick();
+  };
+  r.pause = () => {
+    if (!r.running()) return;
+    r.base = r.elapsed();
+    r.startedAt = null;
+    clearInterval(r.timer);
+    releaseWake();
+  };
+  return r;
+}
+
+// ── REP PACER (BUILD mode, for exercises with a tempo) ───────────────────────
+let pacer = null;
+
+function builderStartPacer() {
+  const entry = state.builder.exercises[state.builder.activeIdx];
+  if (!entry || !entry.tempo || pacer) return;
+  document.getElementById('pacer-title').textContent = `${nextSetSlot(entry).name}`;
+  pacer = makeRunner({ phases: tempoPhases(entry.tempo), rounds: Infinity, lead: 3 }, renderPacer);
+  document.getElementById('pacer').classList.add('open');
+  pacer.start();
+}
+
+function renderPacer(st) {
+  const label = st.lead ? 'GET READY' : pacer.cfg.phases[st.phase].label;
+  const box = document.getElementById('pacer');
+  box.dataset.phase = st.lead ? 'lead' : label.toLowerCase();
+  document.getElementById('pacer-phase').textContent = label;
+  document.getElementById('pacer-count').textContent = Math.ceil(st.remaining);
+  document.getElementById('pacer-reps').textContent = `${st.round} rep${st.round === 1 ? '' : 's'} done`;
+  document.getElementById('pacer-done').textContent = st.round > 0 ? `DONE · USE ${st.round} REP${st.round === 1 ? '' : 'S'}` : 'DONE';
+}
+
+// Closes the pacer. With useReps, the completed reps go into the reps box,
+// ready for + SET (the weight is still yours to check).
+function stopPacer(useReps) {
+  if (!pacer) return;
+  const reps = runnerState(pacer.cfg, pacer.elapsed()).round;
+  pacer.pause();
+  pacer = null;
+  document.getElementById('pacer').classList.remove('open');
+  const r = document.getElementById('build-reps');
+  if (useReps && reps > 0 && r) { r.value = reps; saveBuilder(); }
+}
+
+function builderOpenTempo(exIdx) {
+  state.builder.exercises[exIdx].tempoOpen = true;
+  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
+  block.querySelector('.build-tempo-btn').style.display = 'none';
+  block.querySelector('.build-tempo-row').style.display = 'flex';
+  block.querySelector('.build-tempo-down').focus();
+  saveBuilder();
+}
+
+// Tempo boxes changed: sets added from now on carry the new tempo
+function builderTempoChange(exIdx) {
+  const block = document.querySelector(`[data-ex-idx="${exIdx}"]`);
+  const down = block.querySelector('.build-tempo-down').value.trim();
+  const up = block.querySelector('.build-tempo-up').value.trim();
+  state.builder.exercises[exIdx].tempo = down !== '' && up !== '' ? normTempo(`${down}-${up}`) : '';
+  saveBuilder();
+  const footer = block.querySelector('.build-footer-active');
+  if (footer) syncFooter(footer, state.builder.exercises[exIdx]);
+  if (exIdx === state.builder.activeIdx) prefillWeight();
+}
+
+// ── INTERVAL TIMER (Timer tab) ───────────────────────────────────────────────
+const IV_KEY = 'ironlog_interval';
+let iv = null;
+
+function ivConfig() {
+  const num = (id, lo, hi, dflt) => {
+    const v = parseInt(document.getElementById(id).value);
+    return isNaN(v) ? dflt : Math.min(Math.max(v, lo), hi);
+  };
+  return { work: num('iv-work', 1, 3600, 30), rest: num('iv-rest', 0, 3600, 15), rounds: num('iv-rounds', 1, 99, 8) };
+}
+
+function ivRunnerCfg(c) {
+  const phases = [{ label: 'WORK', secs: c.work }];
+  if (c.rest > 0) phases.push({ label: 'REST', secs: c.rest });
+  // The session ends after the last work period: no rest after the final round
+  return { phases, rounds: c.rounds, lead: 3, trim: c.rest, countdownBeeps: true };
+}
+
+function ivSetInputsDisabled(off) {
+  ['iv-work', 'iv-rest', 'iv-rounds'].forEach(id => { document.getElementById(id).disabled = off; });
+}
+
+function ivButtons() {
+  const btn = document.getElementById('iv-start');
+  btn.textContent = iv && iv.running() ? 'PAUSE' : iv && !iv.finished && iv.elapsed() > 0 ? 'RESUME' : 'START';
+}
+
+// Shown when nothing is running: what the settings add up to
+function ivIdle() {
+  if (iv) return;
+  const c = ivConfig();
+  try { localStorage.setItem(IV_KEY, JSON.stringify(c)); } catch(e) {}
+  document.getElementById('iv-display').dataset.phase = 'idle';
+  document.getElementById('iv-phase').textContent = 'READY';
+  document.getElementById('iv-count').textContent = fmtClock(c.work);
+  const total = c.rounds * (c.work + c.rest) - c.rest;
+  document.getElementById('iv-round').textContent = `${c.rounds} round${c.rounds === 1 ? '' : 's'} · ${fmtClock(total)} total`;
+  ivButtons();
+}
+
+function renderIv(st) {
+  const label = st.done ? 'DONE' : st.lead ? 'GET READY' : iv.cfg.phases[st.phase].label;
+  document.getElementById('iv-display').dataset.phase = st.done ? 'done' : st.lead ? 'lead' : label.toLowerCase();
+  document.getElementById('iv-phase').textContent = label;
+  document.getElementById('iv-count').textContent = fmtClock(Math.ceil(st.remaining));
+  document.getElementById('iv-round').textContent = `Round ${Math.min(st.round + 1, iv.cfg.rounds)} of ${iv.cfg.rounds}`;
+  ivButtons();
+}
+
+function ivToggle() {
+  if (iv && iv.finished) ivReset();
+  if (!iv) {
+    ivIdle(); // saves the settings
+    iv = makeRunner(ivRunnerCfg(ivConfig()), renderIv);
+    ivSetInputsDisabled(true);
+  }
+  if (iv.running()) iv.pause(); else iv.start();
+  ivButtons();
+}
+
+function ivReset() {
+  if (iv) iv.pause();
+  iv = null;
+  ivSetInputsDisabled(false);
+  ivIdle();
+}
+
+// ── STOPWATCH (Timer tab) ────────────────────────────────────────────────────
+const sw = { base: 0, startedAt: null, timer: null, laps: [] };
+
+function swElapsed() { return sw.base + (sw.startedAt === null ? 0 : clockNow() - sw.startedAt); }
+
+// Milliseconds as m:ss.t
+function fmtStopwatch(ms) {
+  const tenths = Math.floor(ms / 100);
+  return `${Math.floor(tenths / 600)}:${String(Math.floor(tenths / 10) % 60).padStart(2, '0')}.${tenths % 10}`;
+}
+
+function renderSw() {
+  document.getElementById('sw-count').textContent = fmtStopwatch(swElapsed());
+  document.getElementById('sw-start').textContent = sw.startedAt !== null ? 'STOP' : swElapsed() > 0 ? 'RESUME' : 'START';
+  document.getElementById('sw-laps').innerHTML = sw.laps.map((t, i) =>
+    `<div class="sw-lap"><span>LAP ${i + 1}</span><span>${fmtStopwatch(t - (i ? sw.laps[i - 1] : 0))}</span><span>${fmtStopwatch(t)}</span></div>`
+  ).reverse().join('');
+}
+
+function swToggle() {
+  if (sw.startedAt === null) {
+    sw.startedAt = clockNow();
+    sw.timer = setInterval(renderSw, 100);
+    holdWake();
+  } else {
+    sw.base = swElapsed();
+    sw.startedAt = null;
+    clearInterval(sw.timer);
+    releaseWake();
+  }
+  renderSw();
+}
+
+function swLap() {
+  const t = swElapsed();
+  if (t <= 0 || (sw.laps.length && sw.laps[sw.laps.length - 1] === t)) return;
+  sw.laps.push(t);
+  renderSw();
+}
+
+function swReset() {
+  if (sw.startedAt !== null) swToggle();
+  sw.base = 0;
+  sw.laps = [];
+  renderSw();
 }
 
 // ── NOTES ─────────────────────────────────────────────────────────────────────
@@ -2501,6 +3097,8 @@ function onBuildNoteChange() {
 function carryNote(from, to) {
   to.note = from.note || '';
   to.noteOpen = !!from.noteOpen;
+  to.tempo = from.tempo || '';
+  to.tempoOpen = !!from.tempoOpen;
   return to;
 }
 
@@ -2533,10 +3131,13 @@ function builderSetIsPR(name, s) {
   if (!best) return false;
   const asLogged = x => ({ dual: false, v: x.weight, assisted: !!x.assisted, bw: !!x.bw, reps: x.reps });
   for (const e of state.builder.exercises) {
+    // Every set entered so far, paired with the exercise it belongs to
     const sets = isGroup(e)
-      ? e.rounds.concat([e.cur]).flatMap(r => r.filter((_, i) => e.names[i] === name))
-      : (e.name === name ? e.sets : []);
-    for (const x of sets) if (beatsRecord(asLogged(x), best)) best = asLogged(x);
+      ? e.rounds.concat([e.cur]).flatMap(r => r.map((x, i) => [e.names[i], x]))
+      : e.sets.map(x => [e.name, x]);
+    for (const [n, x] of sets) {
+      if (statName(n, x.tempo) === name && beatsRecord(asLogged(x), best)) best = asLogged(x);
+    }
   }
   return beatsRecord(asLogged(s), best);
 }
@@ -2544,9 +3145,10 @@ function builderSetIsPR(name, s) {
 // A logged set in compact form: "47×10", "-20×8", "40/35×12", "BW×20"
 function fmtLoggedSet(x) {
   if (!x) return '—';
-  if (x.bw) return `BW×${x.reps}`;
+  const tempo = x.tempo ? ` @${x.tempo}` : '';
+  if (x.bw) return `BW×${x.reps}${tempo}`;
   const w = x.dual ? `${fmtWeight(x.v)}/${fmtWeight(x.v2)}` : `${x.assisted ? '-' : ''}${fmtWeight(x.v)}`;
-  return `${w}×${x.reps}`;
+  return `${w}×${x.reps}${tempo}`;
 }
 
 // ── RECENT WORKOUTS (shown inside BUILD mode) ────────────────────────────────
@@ -2636,13 +3238,14 @@ function splitNames(text) { return text.trim().split(COMPOUND_SEP).map(canon).fi
 function emptyEntry(names) { return names.length >= 2 ? { names, rounds: [], cur: [] } : { name: names[0], sets: [] }; }
 
 function fmtSetLabel(s) {
-  if (s.bw) return `BW × ${s.reps}`;
-  return `${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${settings.unit} × ${s.reps}`;
+  const tempo = s.tempo ? ` @${s.tempo}` : '';
+  if (s.bw) return `BW × ${s.reps}${tempo}`;
+  return `${s.assisted ? '-' : ''}${fmtWeight(s.weight)} ${settings.unit} × ${s.reps}${tempo}`;
 }
 
 // A set as it is written into the log text
 function fmtSetText(s) {
-  return s.bw ? `bw ${s.reps}` : `${s.assisted ? '-' : ''}${s.weight}# ${s.reps}`;
+  return (s.bw ? `bw ${s.reps}` : `${s.assisted ? '-' : ''}${s.weight}# ${s.reps}`) + (s.tempo ? ` @${s.tempo}` : '');
 }
 
 function roundLabel(entry) {
@@ -2681,8 +3284,13 @@ function makeActiveFooter(exIdx) {
   rep.className = 'build-switch-btn build-repeat-btn';
   rep.textContent = isGroup(entry) ? '↻ REPEAT LAST ROUND' : '↻ REPEAT LAST SET';
   rep.onclick = () => builderRepeatLast(exIdx);
+  const pace = document.createElement('button');
+  pace.type = 'button';
+  pace.className = 'build-switch-btn build-pacer-btn';
+  pace.onclick = () => builderStartPacer();
   div.appendChild(last);
   div.appendChild(row);
+  div.appendChild(pace);
   div.appendChild(rep);
   syncFooter(div, entry);
   return div;
@@ -2696,6 +3304,11 @@ function syncFooter(footer, entry) {
   if (last) {
     last.textContent = lastHintText(entry);
     last.style.display = last.textContent ? 'block' : 'none';
+  }
+  const pace = footer.querySelector('.build-pacer-btn');
+  if (pace) {
+    pace.textContent = `▶ START PACER · ${entry.tempo}`;
+    pace.style.display = entry.tempo ? 'block' : 'none';
   }
   const rep = footer.querySelector('.build-repeat-btn');
   if (rep) {
@@ -2801,6 +3414,30 @@ function makeExBlock(exIdx, isActive) {
   removeBtn.textContent = '×';
   removeBtn.onclick = () => builderRemoveEx(exIdx);
 
+  const tempoShown = !!(entry.tempo || entry.tempoOpen);
+  const tempoBtn = document.createElement('button');
+  tempoBtn.type = 'button';
+  tempoBtn.className = 'build-link-btn build-tempo-btn';
+  tempoBtn.title = 'set seconds down and up per rep';
+  tempoBtn.textContent = 'TEMPO';
+  tempoBtn.style.display = tempoShown ? 'none' : '';
+  tempoBtn.onclick = () => builderOpenTempo(exIdx);
+
+  const tempoRow = document.createElement('div');
+  tempoRow.className = 'build-tempo-row';
+  tempoRow.style.display = tempoShown ? 'flex' : 'none';
+  const tp = entry.tempo ? entry.tempo.split('-') : [];
+  tempoRow.innerHTML = `
+    <span class="build-unit">TEMPO</span>
+    <input type="number" class="build-input-sm build-tempo-down" min="0" step="1" placeholder="down" aria-label="seconds down" />
+    <span class="build-unit">s down</span>
+    <input type="number" class="build-input-sm build-tempo-up" min="0" step="1" placeholder="up" aria-label="seconds up" />
+    <span class="build-unit">s up</span>`;
+  tempoRow.querySelector('.build-tempo-down').value = tp.length ? tp[0] : '';
+  tempoRow.querySelector('.build-tempo-up').value = tp.length ? tp[tp.length === 4 ? 2 : 1] : '';
+  tempoRow.querySelectorAll('input').forEach(i => { i.oninput = () => builderTempoChange(exIdx); });
+
+  tools.appendChild(tempoBtn);
   tools.appendChild(noteBtn);
   tools.appendChild(linkBtn);
   tools.appendChild(removeBtn);
@@ -2822,6 +3459,7 @@ function makeExBlock(exIdx, isActive) {
   div.appendChild(header);
   div.appendChild(chipsEl);
   div.appendChild(noteInp);
+  div.appendChild(tempoRow);
   div.appendChild(isActive ? makeActiveFooter(exIdx) : makeInactiveFooter(exIdx));
   return div;
 }
@@ -2965,7 +3603,8 @@ function builderAddSet() {
   }
 
   const entry = state.builder.exercises[exIdx];
-  const exName = isGroup(entry) ? entry.names[entry.cur.length] : entry.name;
+  if (entry.tempo) setData.tempo = entry.tempo;
+  const exName = statName(isGroup(entry) ? entry.names[entry.cur.length] : entry.name, setData.tempo);
   const isPR = builderSetIsPR(exName, setData); // checked before the set joins the entry
   if (isGroup(entry)) {
     // One set per linked exercise in turn; a full pass completes the round
@@ -3285,11 +3924,13 @@ function renderChart() {
     setsLabel.style.display = 'block';
     setsList.innerHTML = sessionsWithEx.map(s => {
       const chips = s.exercises[state.selectedEx].map(set => {
-        if (set.bw) return `<span class="set-chip">BW × ${set.reps}</span>`;
+        // For tempo sets, show the time under tension (reps × seconds per rep)
+        const tut = set.tempo ? ` · ${fmtClock(tempoSecs(set.tempo) * set.reps)}` : '';
+        if (set.bw) return `<span class="set-chip">BW × ${set.reps}${tut}</span>`;
         const wRaw = set.dual ? `${fmtWeight(set.v)}/${fmtWeight(set.v2)}` : `${set.assisted ? '-' : ''}${fmtWeight(set.v)}`;
-        return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}</span>`;
+        return `<span class="set-chip">${wRaw} ${settings.unit} × ${set.reps}${tut}</span>`;
       }).join('');
-      const notes = s.blocks.filter(b => b.note && b.names.includes(state.selectedEx))
+      const notes = s.blocks.filter(b => b.note && b.names.includes(baseName(state.selectedEx)))
         .map(b => `<div class="set-note">${esc(b.note)}</div>`).join('');
       return `<div class="set-day"><div class="set-date">${esc(isoToDisplay(s.date))}</div>${chips}${notes}</div>`;
     }).join('');
@@ -3430,6 +4071,19 @@ renderPRs();
 // BUILD is the default mode: fill in today's date and the exercise suggestions
 setLogMode('build');
 
+// Timer tab: bring back the last interval settings and the beep choice
+try {
+  const c = JSON.parse(localStorage.getItem(IV_KEY) || 'null');
+  if (c && typeof c === 'object') {
+    for (const k of ['work', 'rest', 'rounds']) {
+      if (Number.isFinite(c[k])) document.getElementById('iv-' + k).value = c[k];
+    }
+  }
+} catch(e) {}
+ivIdle();
+renderSw();
+setSound(soundOn);
+
 // Restore an in-progress BUILD-mode session (exercises/sets not yet saved)
 // so it survives the tab being reloaded, e.g. a mobile OS reclaiming a
 // backgrounded tab when the user switches apps.
@@ -3443,7 +4097,7 @@ setLogMode('build');
       .map(e => Object.assign(Array.isArray(e.names)
         ? { names: e.names, rounds: Array.isArray(e.rounds) ? e.rounds : [], cur: Array.isArray(e.cur) ? e.cur : [] }
         : { name: e.name, sets: Array.isArray(e.sets) ? e.sets : [] },
-        { note: str(e.note), noteOpen: !!e.noteOpen }));
+        { note: str(e.note), noteOpen: !!e.noteOpen, tempo: normTempo(e.tempo), tempoOpen: !!e.tempoOpen }));
     state.builder = {
       date: savedBuilder.date || '',
       exercises,
