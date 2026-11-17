@@ -435,6 +435,273 @@ canvas#chart {
   opacity: 1;
 }
 
+/* TEMPLATES */
+#tpl-box {
+  margin-bottom: 14px;
+}
+
+#tpl-toggle {
+  margin-top: 0;
+  text-align: left;
+  padding: 8px 10px;
+}
+
+#recent-box {
+  margin-bottom: 8px;
+}
+
+#tpl-list {
+  margin-top: 8px;
+}
+
+.tpl-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #222;
+}
+
+.tpl-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.tpl-sub {
+  font-size: 10px;
+  line-height: 1.5;
+  color: #999;
+  margin-top: 2px;
+}
+
+.tpl-save {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.recent-tpl {
+  display: block;
+  background: none;
+  border: none;
+  color: #777;
+  font-size: 9px;
+  letter-spacing: 1px;
+  font-family: var(--font);
+  padding: 2px 0 10px;
+  cursor: pointer;
+}
+
+.recent-note-text {
+  font-size: 11px;
+  font-style: italic;
+  line-height: 1.5;
+  color: #aaa;
+  padding: 1px 0 3px;
+}
+
+/* PLAN + CALENDAR */
+#plan-banner {
+  margin-bottom: 14px;
+}
+
+.plan-banner-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--accent-faint);
+  border: 1px solid var(--accent-dim);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #ccc;
+}
+
+.plan-banner-row b {
+  color: #fff;
+}
+
+#cal-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#cal-title-month {
+  flex: 1;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #eee;
+}
+
+.cal-nav {
+  background: none;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  color: #bbb;
+  font-size: 15px;
+  line-height: 1;
+  padding: 7px 13px;
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+.cal-today {
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 9px 10px;
+}
+
+#cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-wd {
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #888;
+  text-align: center;
+  padding: 4px 0;
+}
+
+.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 44px;
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  color: #ccc;
+  font-size: 12px;
+  font-family: var(--font);
+  padding: 8px 0 5px;
+  cursor: pointer;
+}
+
+.cal-cell.blank {
+  background: none;
+  border-color: transparent;
+  cursor: default;
+}
+
+.cal-cell.today {
+  border-color: #888;
+  font-weight: 700;
+  color: #fff;
+}
+
+.cal-cell.selected {
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.cal-dots {
+  display: flex;
+  height: 6px;
+}
+
+.dot {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot.log {
+  background: var(--accent);
+}
+
+.dot.plan {
+  border: 1.5px solid var(--accent);
+}
+
+.cal-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #888;
+  margin: 8px 0 14px;
+}
+
+.cal-day-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #eee;
+  margin-bottom: 8px;
+}
+
+.cal-logged {
+  padding-bottom: 6px;
+}
+
+.cal-logged .recent-date {
+  cursor: default;
+}
+
+.cal-link {
+  display: inline-block;
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 6px 0;
+}
+
+.cal-plan {
+  background: #181818;
+  border: 1px dashed #444;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 6px;
+}
+
+.cal-plan-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #eee;
+}
+
+.cal-plan-title span {
+  font-weight: 400;
+  color: #888;
+}
+
+.cal-plan-btns {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.cal-plan-btns .build-ex-remove {
+  margin-left: auto;
+}
+
+.cal-form {
+  margin-top: 16px;
+}
+
+.cal-form select.build-input {
+  margin-bottom: 8px;
+}
+
+#cal-time {
+  flex: 0 0 118px;
+}
+
 /* TEMPO, PACER, TIMERS */
 .build-tempo-row {
   display: flex;
@@ -1431,6 +1698,81 @@ body.light .mode-btn.active {
   color: #fff;
 }
 
+body.light .tpl-row {
+  border-color: #e0e0e0;
+}
+
+body.light .tpl-sub,
+body.light .recent-note-text {
+  color: #666;
+}
+
+body.light .recent-tpl,
+body.light .cal-wd,
+body.light .cal-legend {
+  color: #777;
+}
+
+body.light .plan-banner-row {
+  background: rgba(58, 112, 0, 0.06);
+  border-color: rgba(58, 112, 0, 0.4);
+  color: #333;
+}
+
+body.light .plan-banner-row b,
+body.light #cal-title-month,
+body.light .cal-day-title,
+body.light .cal-plan-title {
+  color: #111;
+}
+
+body.light .cal-nav {
+  border-color: #d0d0d0;
+  color: #555;
+}
+
+body.light .cal-cell {
+  background: #fff;
+  border-color: #d0d0d0;
+  color: #333;
+}
+
+body.light .cal-cell.blank {
+  background: none;
+  border-color: transparent;
+}
+
+body.light .cal-cell.today {
+  border-color: #777;
+  color: #000;
+}
+
+body.light .cal-cell.selected {
+  border-color: #3a7000;
+  color: #000;
+}
+
+body.light .dot.log {
+  background: #3a7000;
+}
+
+body.light .dot.plan {
+  border-color: #3a7000;
+}
+
+body.light .cal-link {
+  color: #3a7000;
+}
+
+body.light .cal-plan {
+  background: #fff;
+  border-color: #bbb;
+}
+
+body.light .cal-plan-title span {
+  color: #777;
+}
+
 body.light #pacer {
   background: #f3f3f3;
 }
@@ -1714,6 +2056,7 @@ body.light #build-date {
     <div id="log-mode-toggle">
       <button type="button" class="mode-btn active" id="mode-build-btn" onclick="setLogMode('build')">BUILD</button>
       <button type="button" class="mode-btn" id="mode-paste-btn" onclick="setLogMode('paste')">IMPORT</button>
+      <button type="button" class="mode-btn" id="mode-cal-btn" onclick="setLogMode('cal')">CALENDAR</button>
     </div>
 
     <!-- IMPORT mode (ids and code still call it "paste") -->
@@ -1733,6 +2076,7 @@ body.light #build-date {
 
     <!-- BUILD mode -->
     <div id="build-mode">
+      <div id="plan-banner" style="display:none"></div>
       <div class="build-section">
         <div class="build-label">DATE</div>
         <input type="date" id="build-date" class="build-input" oninput="onBuildDateChange()" />
@@ -1751,6 +2095,10 @@ body.light #build-date {
         <button type="button" id="recent-toggle" class="build-switch-btn" aria-controls="recent-list" aria-expanded="false" onclick="toggleRecent()">▸ RECENT WORKOUTS</button>
         <div id="recent-list" style="display:none"></div>
       </div>
+      <div id="tpl-box">
+        <button type="button" id="tpl-toggle" class="build-switch-btn" aria-controls="tpl-list" aria-expanded="false" onclick="toggleTemplates()">▸ TEMPLATES</button>
+        <div id="tpl-list" style="display:none"></div>
+      </div>
       <div id="build-preview"></div>
       <div class="build-section" style="margin-top:14px">
         <div class="build-label">WORKOUT NOTES</div>
@@ -1761,6 +2109,21 @@ body.light #build-date {
         <button type="button" id="build-clear-btn" onclick="builderClear()">CLEAR</button>
       </div>
       <div id="build-save-msg">✓ Session saved</div>
+    </div>
+
+    <!-- CALENDAR mode -->
+    <div id="cal-mode" style="display:none">
+      <div id="cal-head">
+        <button type="button" class="cal-nav" onclick="calMove(-1)" aria-label="Previous month">‹</button>
+        <div id="cal-title-month"></div>
+        <button type="button" class="cal-nav" onclick="calMove(1)" aria-label="Next month">›</button>
+        <button type="button" class="cal-nav cal-today" onclick="calToday()">TODAY</button>
+      </div>
+      <div id="cal-grid"></div>
+      <div class="cal-legend"><i class="dot log"></i> logged <i class="dot plan" style="margin-left:10px"></i> planned</div>
+      <div id="cal-detail"></div>
+      <button type="button" class="build-switch-btn" style="margin-top:18px" onclick="exportIcs()">EXPORT CALENDAR FILE (.ics)</button>
+      <p class="hint" style="margin-top:8px">The file holds every logged and planned workout. Import it into Google Calendar, Apple Calendar or Outlook.</p>
     </div>
   </div>
 
@@ -2456,6 +2819,7 @@ function setUnit(u) {
   }
   if (state.selectedEx) renderChart();
   renderRecent();
+  renderCalendar();
   // Builder chips/footer bake in settings.unit at creation time — rebuild them
   // so labels stay accurate and builderAddSet doesn't silently misconvert input.
   if (document.getElementById('build-mode').style.display !== 'none') {
@@ -2553,6 +2917,8 @@ function recompute() {
   const skippedNote = skipped ? ` · ${skipped} line${skipped === 1 ? '' : 's'} need a # weight marker` : '';
   document.getElementById('subtitle').textContent = `${state.sessions.length} sessions · ${Object.keys(state.prs).length} exercises${skippedNote}`;
   renderRecent();
+  renderCalendar();
+  renderPlanBanner();
 }
 
 // ── TABS ─────────────────────────────────────────────────────────────────────
@@ -2618,16 +2984,17 @@ function exportLog() {
 
 // ── BUILDER ──────────────────────────────────────────────────────────────────
 function setLogMode(mode) {
-  const paste = mode === 'paste';
-  document.getElementById('paste-mode').style.display = paste ? 'block' : 'none';
-  document.getElementById('build-mode').style.display = paste ? 'none' : 'block';
-  document.getElementById('mode-paste-btn').classList.toggle('active', paste);
-  document.getElementById('mode-build-btn').classList.toggle('active', !paste);
-  if (!paste) {
+  for (const m of ['build', 'paste', 'cal']) {
+    document.getElementById(`${m}-mode`).style.display = m === mode ? 'block' : 'none';
+    document.getElementById(`mode-${m}-btn`).classList.toggle('active', m === mode);
+  }
+  if (mode === 'build') {
     refreshBuilderSuggestions();
     const d = document.getElementById('build-date');
     if (!d.value) d.value = todayLocalISO();
+    renderPlanBanner();
   }
+  if (mode === 'cal') renderCalendar();
 }
 
 function refreshBuilderSuggestions() {
@@ -3195,26 +3562,12 @@ function renderRecent() {
   }
   const wasRendered = list.querySelector('.recent-session') !== null;
   const openDates = new Set([...list.querySelectorAll('.recent-session[open]')].map(d => d.dataset.date));
-  // A note shows as a tappable line; with no note, a small "+ note" button takes its place
-  const noteBtn = (s, bi, note, addLabel) =>
-    `<button type="button" class="recent-note${note ? '' : ' empty'}" data-date="${esc(s.date)}" data-block="${bi}">${note ? esc(note) : addLabel}</button>`;
   const html = sorted.slice(0, recentShown).map((s, i) => {
-    const rows = s.blocks.map((b, bi) => {
-      const group = b.names.length > 1;
-      const chips = b.rows.map(r =>
-        `<span class="set-chip">${group ? r.map(fmtLoggedSet).join(' + ') : fmtLoggedSet(r[0])}</span>`
-      ).join('');
-      return `<div class="recent-ex">
-        <div class="recent-name-row"><span class="recent-name">${esc(b.names.join(' + '))}</span>${b.note ? '' : noteBtn(s, bi, '', '+ NOTE')}</div>
-        ${b.note ? noteBtn(s, bi, b.note, '') : ''}${chips}
-      </div>`;
-    }).join('');
     const isOpen = wasRendered ? openDates.has(s.date) : i === 0;
     const count = `${s.blocks.length} exercise${s.blocks.length === 1 ? '' : 's'}`;
     return `<details class="recent-session" data-date="${esc(s.date)}"${isOpen ? ' open' : ''}>
       <summary class="recent-date">${esc(recentDateLabel(s.date))} <span>· ${count} · ${settings.unit}</span></summary>
-      ${noteBtn(s, -1, s.note, '+ WORKOUT NOTE')}
-      ${rows}
+      ${sessionBodyHTML(s, true)}
     </details>`;
   }).join('');
   const left = sorted.length - recentShown;
@@ -3223,6 +3576,456 @@ function renderRecent() {
     : '';
   list.innerHTML = html + more;
 }
+
+// ── SMALL STORAGE HELPERS ────────────────────────────────────────────────────
+function loadStored(key, fallback) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key));
+    return v === null ? fallback : v;
+  } catch(e) { return fallback; }
+}
+
+function store(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) {}
+}
+
+// One past session's exercises, sets and notes. editable = notes can be tapped
+// to edit and the session can be saved as a template (the recent list);
+// otherwise it is read-only (the calendar).
+function sessionBodyHTML(s, editable) {
+  const noteEl = (bi, note, addLabel) => editable
+    ? `<button type="button" class="recent-note${note ? '' : ' empty'}" data-date="${esc(s.date)}" data-block="${bi}">${note ? esc(note) : addLabel}</button>`
+    : (note ? `<div class="recent-note-text">${esc(note)}</div>` : '');
+  const rows = s.blocks.map((b, bi) => {
+    const group = b.names.length > 1;
+    const chips = b.rows.map(r =>
+      `<span class="set-chip">${group ? r.map(fmtLoggedSet).join(' + ') : fmtLoggedSet(r[0])}</span>`
+    ).join('');
+    return `<div class="recent-ex">
+        <div class="recent-name-row"><span class="recent-name">${esc(b.names.join(' + '))}</span>${b.note ? '' : noteEl(bi, '', '+ NOTE')}</div>
+        ${b.note ? noteEl(bi, b.note, '') : ''}${chips}
+      </div>`;
+  }).join('');
+  const tpl = editable && s.blocks.length
+    ? `<button type="button" class="recent-tpl" data-date="${esc(s.date)}">SAVE AS TEMPLATE</button>`
+    : '';
+  return `${noteEl(-1, s.note, '+ WORKOUT NOTE')}
+      ${rows}${tpl}`;
+}
+
+// ── TEMPLATES ─────────────────────────────────────────────────────────────────
+// A template is a named list of exercises to start a workout from:
+// { name, entries: [{ names: [..], tempo }] } (several names = a back-to-back group).
+// Weights are not stored: they are filled in from last time as usual.
+const TEMPLATES_KEY = 'ironlog_templates';
+const TEMPLATES_OPEN_KEY = 'ironlog_templates_open';
+let templates = [];
+let templatesOpen = false;
+
+function cleanEntries(list) {
+  return (Array.isArray(list) ? list : [])
+    .map(e => ({
+      names: (Array.isArray(e && e.names) ? e.names : []).map(cleanNote).filter(Boolean),
+      tempo: normTempo(e && e.tempo),
+    }))
+    .filter(e => e.names.length);
+}
+
+function loadTemplates() {
+  const raw = loadStored(TEMPLATES_KEY, []);
+  templates = (Array.isArray(raw) ? raw : [])
+    .map(t => ({ name: cleanNote(t && t.name), entries: cleanEntries(t && t.entries) }))
+    .filter(t => t.name && t.entries.length);
+  templatesOpen = loadStored(TEMPLATES_OPEN_KEY, false) === true;
+}
+
+function findTemplate(name) {
+  const key = cleanNote(name).toLowerCase();
+  return (key && templates.find(t => t.name.toLowerCase() === key)) || null;
+}
+
+function templateSummary(t) {
+  return t.entries.map(e => e.names.join(' + ') + (e.tempo ? ` @${e.tempo}` : '')).join(' · ');
+}
+
+// Saves under the name, replacing a template that already has it
+function saveTemplate(name, entries) {
+  const clean = cleanNote(name);
+  const list = cleanEntries(entries);
+  if (!list.length) { showToast('Add exercises first'); return false; }
+  if (!clean) { showToast('Give the template a name first'); return false; }
+  const existing = findTemplate(clean);
+  if (existing) { existing.name = clean; existing.entries = list; }
+  else templates.push({ name: clean, entries: list });
+  templates.sort((a, b) => a.name.localeCompare(b.name));
+  store(TEMPLATES_KEY, templates);
+  renderTemplates();
+  renderCalendar();
+  showToast(`${existing ? 'Updated' : 'Saved'} template “${clean}”`);
+  return true;
+}
+
+function deleteTemplate(name) {
+  const t = findTemplate(name);
+  if (!t || !confirm(`Delete the template “${t.name}”?`)) return;
+  templates = templates.filter(x => x !== t);
+  store(TEMPLATES_KEY, templates);
+  renderTemplates();
+  renderCalendar();
+}
+
+function builderEntriesForTemplate() {
+  return state.builder.exercises.map(e => ({ names: isGroup(e) ? e.names : [e.name], tempo: e.tempo || '' }));
+}
+
+function sessionEntriesForTemplate(s) {
+  return s.blocks.map(b => {
+    const paced = b.rows.flat().find(x => x && x.tempo);
+    return { names: b.names, tempo: paced ? paced.tempo : '' };
+  });
+}
+
+function saveBuilderAsTemplate() {
+  const inp = document.getElementById('tpl-name');
+  saveTemplate(inp ? inp.value : '', builderEntriesForTemplate());
+}
+
+// Adds a template's exercises to the workout being built. Exercises already in
+// the workout are left alone, so applying twice does no harm.
+function applyTemplate(name) {
+  const t = findTemplate(name);
+  if (!t) return;
+  const list = state.builder.exercises;
+  let firstNew = -1;
+  for (const e of t.entries) {
+    const title = e.names.join(' + ');
+    if (list.some(x => entryTitle(x) === title)) continue;
+    const entry = emptyEntry(e.names.slice());
+    entry.tempo = e.tempo;
+    list.push(entry);
+    if (firstNew === -1) firstNew = list.length - 1;
+  }
+  if (firstNew !== -1) state.builder.activeIdx = firstNew;
+  state.builder.editingIdx = -1;
+  setLinkMode(-1);
+  buildPreviewFromScratch();
+  saveBuilder();
+  showToast(firstNew === -1 ? `“${t.name}” is already in this workout` : `Loaded “${t.name}”`);
+}
+
+function toggleTemplates() {
+  templatesOpen = !templatesOpen;
+  store(TEMPLATES_OPEN_KEY, templatesOpen);
+  renderTemplates();
+}
+
+function renderTemplates() {
+  const btn = document.getElementById('tpl-toggle');
+  const list = document.getElementById('tpl-list');
+  btn.textContent = `${templatesOpen ? '▾' : '▸'} TEMPLATES${templates.length ? ` (${templates.length})` : ''}`;
+  btn.setAttribute('aria-expanded', templatesOpen ? 'true' : 'false');
+  list.style.display = templatesOpen ? 'block' : 'none';
+  // The list holds a text box: blur and pin the scroll around the swap (see CLAUDE.md)
+  const y = window.scrollY;
+  if (document.activeElement && list.contains(document.activeElement)) document.activeElement.blur();
+  if (!templatesOpen) {
+    list.innerHTML = '';
+  } else {
+    const rows = templates.map(t => `<div class="tpl-row" data-name="${esc(t.name)}">
+        <div class="tpl-main"><div class="recent-name">${esc(t.name)}</div><div class="tpl-sub">${esc(templateSummary(t))}</div></div>
+        <button type="button" class="build-add-btn tpl-use">USE</button>
+        <button type="button" class="build-ex-remove tpl-del" title="delete template" aria-label="Delete template">×</button>
+      </div>`).join('');
+    list.innerHTML = (rows || '<div class="recent-empty">No templates yet. Build a workout, then save it here.</div>') +
+      `<div class="tpl-save">
+        <input type="text" id="tpl-name" class="build-input" placeholder="name, e.g. Push day" aria-label="template name"
+               onkeydown="if(event.key==='Enter')saveBuilderAsTemplate()" />
+        <button type="button" class="build-add-btn" onclick="saveBuilderAsTemplate()">SAVE CURRENT</button>
+      </div>`;
+  }
+  window.scrollTo(0, y);
+}
+
+// "SAVE AS TEMPLATE" on a past workout: swap the button for a name box.
+// Enter saves; Escape or tapping away cancels.
+function startSessionTemplate(btn) {
+  const sess = state.sessions.find(s => s.date === btn.dataset.date);
+  if (!sess) return;
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.className = 'build-note-input';
+  inp.placeholder = 'template name — Enter to save';
+  let done = false;
+  const finish = commit => {
+    if (done) return;
+    done = true;
+    const y = window.scrollY;
+    if (commit) saveTemplate(inp.value, sessionEntriesForTemplate(sess));
+    renderRecent();
+    window.scrollTo(0, y);
+  };
+  inp.onkeydown = e => {
+    if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+    else if (e.key === 'Escape') finish(false);
+  };
+  inp.onblur = () => finish(false);
+  btn.replaceWith(inp);
+  inp.focus();
+}
+
+// ── PLAN (scheduled workouts) ────────────────────────────────────────────────
+// [{ id, date: 'YYYY-MM-DD', time: 'HH:MM' or '', title, template: name or '' }]
+const PLAN_KEY = 'ironlog_plan';
+let plan = [];
+
+function loadPlan() {
+  const raw = loadStored(PLAN_KEY, []);
+  plan = (Array.isArray(raw) ? raw : [])
+    .filter(p => p && /^\d{4}-\d{2}-\d{2}$/.test(p.date) && cleanNote(p.title))
+    .map(p => ({
+      id: String(p.id || ''), date: p.date, time: /^\d\d:\d\d$/.test(p.time) ? p.time : '',
+      title: cleanNote(p.title), template: cleanNote(p.template),
+    }));
+}
+
+function savePlan() {
+  plan.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  store(PLAN_KEY, plan);
+}
+
+function planFor(date) { return plan.filter(p => p.date === date); }
+function sessionOn(date) { return state.sessions.find(s => s.date === date) || null; }
+
+function addPlan() {
+  const tpl = document.getElementById('cal-tpl').value;
+  const title = cleanNote(document.getElementById('cal-title').value) || tpl;
+  const time = document.getElementById('cal-time').value;
+  if (!title) { showToast('Pick a template or type a title'); return; }
+  plan.push({
+    id: `${clockNow()}-${Math.random().toString(36).slice(2, 7)}`,
+    date: cal.sel, time: /^\d\d:\d\d$/.test(time) ? time : '',
+    title, template: findTemplate(tpl) ? findTemplate(tpl).name : '',
+  });
+  savePlan();
+  renderCalendar();
+  renderPlanBanner();
+  showToast(`Scheduled “${title}” for ${isoToDisplay(cal.sel)}`);
+}
+
+function removePlan(id) {
+  plan = plan.filter(p => p.id !== id);
+  savePlan();
+  renderCalendar();
+  renderPlanBanner();
+}
+
+// Opens the builder for a planned workout, loading its template if it has one.
+// The date only moves when no other workout is already being built.
+function startPlan(id) {
+  const p = plan.find(x => x.id === id);
+  if (!p) return;
+  setLogMode('build');
+  if (state.builder.exercises.length === 0) {
+    document.getElementById('build-date').value = p.date;
+    onBuildDateChange();
+  }
+  if (findTemplate(p.template)) applyTemplate(p.template);
+  else showToast(`Started “${p.title}”`);
+}
+
+// "Planned today" reminder at the top of BUILD, until a workout is logged for today
+function renderPlanBanner() {
+  const el = document.getElementById('plan-banner');
+  const today = todayLocalISO();
+  const items = sessionOn(today) ? [] : planFor(today);
+  el.style.display = items.length ? 'block' : 'none';
+  el.innerHTML = items.map(p => `<div class="plan-banner-row" data-id="${esc(p.id)}">
+      <span>PLANNED TODAY · <b>${esc(p.title)}</b>${p.time ? ' · ' + esc(p.time) : ''}</span>
+      <button type="button" class="build-add-btn cal-start">START</button>
+    </div>`).join('');
+}
+
+// ── CALENDAR EXPORT (Google Calendar link, .ics file) ────────────────────────
+function nextDay(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(y, m - 1, d + 1);
+  return isoFromParts(dt.getFullYear(), dt.getMonth() + 1, dt.getDate());
+}
+
+// Start and end in calendar form. With no time it is an all-day event; with a
+// time it lasts an hour, in whatever time zone the calendar is set to.
+function eventTimes(date, time) {
+  const compact = iso => iso.replace(/-/g, '');
+  if (!time) return { allDay: true, start: compact(date), end: compact(nextDay(date)) };
+  const p2 = n => String(n).padStart(2, '0');
+  const [y, m, d] = date.split('-').map(Number);
+  const [h, mi] = time.split(':').map(Number);
+  const e = new Date(y, m - 1, d, h + 1, mi);
+  return {
+    allDay: false,
+    start: `${compact(date)}T${p2(h)}${p2(mi)}00`,
+    end: `${e.getFullYear()}${p2(e.getMonth() + 1)}${p2(e.getDate())}T${p2(e.getHours())}${p2(e.getMinutes())}00`,
+  };
+}
+
+// A link that opens Google Calendar's "new event" page with everything filled in.
+// No sign-in or permission is involved: the user presses Save there themselves.
+function googleCalUrl(title, date, time, details) {
+  const t = eventTimes(date, time);
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE' +
+    `&text=${encodeURIComponent(title)}&dates=${t.start}/${t.end}` +
+    (details ? `&details=${encodeURIComponent(details)}` : '');
+}
+
+function sessionDetailsText(s) {
+  const lines = [];
+  if (s.note) lines.push(s.note, '');
+  for (const b of s.blocks) {
+    const group = b.names.length > 1;
+    const sets = b.rows.map(r => group ? r.map(fmtLoggedSet).join(' + ') : fmtLoggedSet(r[0])).join(', ');
+    lines.push(`${b.names.join(' + ')}: ${sets}${sets ? ' ' + settings.unit : ''}`.trim());
+    if (b.note) lines.push(`  (${b.note})`);
+  }
+  return lines.join('\n').replace(/×/g, 'x');
+}
+
+function planDetailsText(p) {
+  const t = findTemplate(p.template);
+  return t ? t.entries.map(e => '- ' + e.names.join(' + ') + (e.tempo ? ` @${e.tempo}` : '')).join('\n') : '';
+}
+
+function icsEscape(text) {
+  return String(text).replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/([,;])/g, '\\$1');
+}
+
+// Calendar files wrap long lines, continuing on the next line after one space
+function icsFold(line) {
+  const out = [];
+  while (line.length > 60) { out.push(line.slice(0, 60)); line = ' ' + line.slice(60); }
+  out.push(line);
+  return out.join('\r\n');
+}
+
+// Every logged workout and every still-to-do planned one, as a calendar file
+function buildIcs() {
+  const stamp = new Date(clockNow()).toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const event = (uid, title, date, time, details) => {
+    const t = eventTimes(date, time);
+    return [
+      'BEGIN:VEVENT', `UID:${uid}@ironlog`, `DTSTAMP:${stamp}`,
+      t.allDay ? `DTSTART;VALUE=DATE:${t.start}` : `DTSTART:${t.start}`,
+      t.allDay ? `DTEND;VALUE=DATE:${t.end}` : `DTEND:${t.end}`,
+      `SUMMARY:${icsEscape(title)}`,
+      ...(details ? [`DESCRIPTION:${icsEscape(details)}`] : []),
+      'END:VEVENT',
+    ];
+  };
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Iron Log//EN', 'CALSCALE:GREGORIAN'];
+  const dated = state.sessions.filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s.date)).sort((a, b) => a.date.localeCompare(b.date));
+  for (const s of dated) lines.push(...event(`log-${s.date}`, 'Workout', s.date, '', sessionDetailsText(s)));
+  for (const p of plan) {
+    if (!sessionOn(p.date)) lines.push(...event(`plan-${p.id}`, p.title, p.date, p.time, planDetailsText(p)));
+  }
+  lines.push('END:VCALENDAR');
+  return lines.map(icsFold).join('\r\n') + '\r\n';
+}
+
+function exportIcs() {
+  const blob = new Blob([buildIcs()], { type: 'text/calendar' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'iron-log-calendar.ics';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+// ── CALENDAR (third mode of the Log tab) ─────────────────────────────────────
+const MONTHS_LONG = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+const cal = { y: 0, m: 0, sel: '' }; // month on show (m is 1-12) and the selected day
+
+function calInit() {
+  cal.sel = todayLocalISO();
+  [cal.y, cal.m] = cal.sel.split('-').map(Number);
+}
+
+function calMove(delta) {
+  cal.m += delta;
+  if (cal.m < 1) { cal.m = 12; cal.y--; }
+  if (cal.m > 12) { cal.m = 1; cal.y++; }
+  renderCalendar();
+}
+
+function calToday() { calInit(); renderCalendar(); }
+function calSelect(iso) { cal.sel = iso; renderCalendar(); }
+
+function renderCalendar() {
+  const box = document.getElementById('cal-mode');
+  if (!box || box.style.display === 'none') return;
+  const today = todayLocalISO();
+  const logged = new Set(state.sessions.map(s => s.date));
+  const planned = new Set(plan.map(p => p.date));
+  const lead = new Date(cal.y, cal.m - 1, 1).getDay();
+  const days = new Date(cal.y, cal.m, 0).getDate();
+  let html = ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<span class="cal-wd">${d}</span>`).join('');
+  html += '<span class="cal-cell blank"></span>'.repeat(lead);
+  for (let d = 1; d <= days; d++) {
+    const iso = isoFromParts(cal.y, cal.m, d);
+    const cls = ['cal-cell', iso === today ? 'today' : '', iso === cal.sel ? 'selected' : ''].filter(Boolean).join(' ');
+    // A filled dot = a workout was logged; a ring = one is planned and not yet done
+    const dot = logged.has(iso) ? '<i class="dot log"></i>' : planned.has(iso) ? '<i class="dot plan"></i>' : '';
+    const what = logged.has(iso) ? ', workout logged' : planned.has(iso) ? ', workout planned' : '';
+    html += `<button type="button" class="${cls}" data-date="${iso}" aria-label="${esc(isoToDisplay(iso) + what)}">
+      <span class="cal-num">${d}</span><span class="cal-dots">${dot}</span></button>`;
+  }
+  document.getElementById('cal-title-month').textContent = `${MONTHS_LONG[cal.m - 1]} ${cal.y}`;
+  document.getElementById('cal-grid').innerHTML = html;
+  renderCalDetail();
+}
+
+function renderCalDetail() {
+  const s = sessionOn(cal.sel);
+  const items = planFor(cal.sel);
+  let html = `<div class="cal-day-title">${esc(recentDateLabel(cal.sel))}</div>`;
+  if (s) {
+    const count = `${s.blocks.length} exercise${s.blocks.length === 1 ? '' : 's'}`;
+    html += `<div class="recent-session cal-logged">
+      <div class="recent-date">LOGGED WORKOUT <span>· ${count} · ${settings.unit}</span></div>
+      ${sessionBodyHTML(s, false)}
+      <a class="cal-link" target="_blank" rel="noopener" href="${esc(googleCalUrl('Workout', s.date, '', sessionDetailsText(s)))}">ADD TO GOOGLE CALENDAR ↗</a>
+    </div>`;
+  }
+  for (const p of items) {
+    const t = findTemplate(p.template);
+    html += `<div class="cal-plan" data-id="${esc(p.id)}">
+      <div class="cal-plan-title">${s ? '✓ ' : ''}${esc(p.title)}<span>${p.time ? ' · ' + esc(p.time) : ''}${s ? ' · done' : ' · planned'}</span></div>
+      ${t ? `<div class="tpl-sub">${esc(templateSummary(t))}</div>` : ''}
+      <div class="cal-plan-btns">
+        <button type="button" class="build-add-btn cal-start">START</button>
+        <a class="cal-link" target="_blank" rel="noopener" href="${esc(googleCalUrl(p.title, p.date, p.time, planDetailsText(p)))}">GOOGLE CALENDAR ↗</a>
+        <button type="button" class="build-ex-remove cal-remove" title="remove" aria-label="Remove planned workout">×</button>
+      </div>
+    </div>`;
+  }
+  if (!s && !items.length) html += '<div class="recent-empty">Nothing logged or planned.</div>';
+  html += `<div class="cal-form">
+    <div class="build-label">PLAN A WORKOUT ON THIS DAY</div>
+    <select id="cal-tpl" class="build-input" aria-label="template">
+      <option value="">No template</option>
+      ${templates.map(t => `<option value="${esc(t.name)}">${esc(t.name)}</option>`).join('')}
+    </select>
+    <div class="build-row">
+      <input type="text" id="cal-title" class="build-input" placeholder="title (optional with a template)" aria-label="title" />
+      <input type="time" id="cal-time" class="build-input" aria-label="time (optional)" />
+    </div>
+    <button type="button" class="build-switch-btn" onclick="addPlan()">+ SCHEDULE</button>
+  </div>`;
+  document.getElementById('cal-detail').innerHTML = html;
+}
+
+loadTemplates();
+loadPlan();
+calInit();
 
 // ── BUILDER DOM HELPERS ───────────────────────────────────────────────────────
 // A builder entry is either a single exercise { name, sets: [set] } or a
@@ -4119,10 +4922,36 @@ setSound(soundOn);
   }
 }
 
+renderTemplates();
+
 document.getElementById('recent-list').addEventListener('click', e => {
   const btn = e.target.closest('.recent-note');
-  if (btn) startRecentNoteEdit(btn);
+  if (btn) { startRecentNoteEdit(btn); return; }
+  const tpl = e.target.closest('.recent-tpl');
+  if (tpl) startSessionTemplate(tpl);
 });
+
+document.getElementById('tpl-list').addEventListener('click', e => {
+  const row = e.target.closest('.tpl-row');
+  if (!row) return;
+  if (e.target.closest('.tpl-use')) applyTemplate(row.dataset.name);
+  else if (e.target.closest('.tpl-del')) deleteTemplate(row.dataset.name);
+});
+
+document.getElementById('cal-grid').addEventListener('click', e => {
+  const cell = e.target.closest('.cal-cell[data-date]');
+  if (cell) calSelect(cell.dataset.date);
+});
+
+// START / remove on a planned workout, in the calendar or the "planned today" banner
+for (const id of ['cal-detail', 'plan-banner']) {
+  document.getElementById(id).addEventListener('click', e => {
+    const item = e.target.closest('[data-id]');
+    if (!item) return;
+    if (e.target.closest('.cal-start')) startPlan(item.dataset.id);
+    else if (e.target.closest('.cal-remove')) removePlan(item.dataset.id);
+  });
+}
 
 document.getElementById('pr-list').addEventListener('click', e => {
   const row = e.target.closest('.pr-row');
